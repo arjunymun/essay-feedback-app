@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type SetupNoticeProps = {
   hasSupabase: boolean;
   hasServiceRole: boolean;
@@ -25,6 +27,14 @@ export function SetupNotice({
       <p className="mt-2 text-amber-100/80">
         Add {missing.join(", ")} in `.env.local` before the authenticated upload flow can run end to end.
       </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Link className="secondary-button" href="/setup">
+          Open setup guide
+        </Link>
+        <Link className="rounded-full px-4 py-2 text-amber-50/90 transition hover:text-white" href="/dashboard">
+          Explore demo mode
+        </Link>
+      </div>
     </div>
   );
 }

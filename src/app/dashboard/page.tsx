@@ -38,6 +38,9 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <Link className="secondary-button" href="/setup">
+              Setup
+            </Link>
             <Link className="secondary-button" href="/account">
               Account
             </Link>
@@ -52,7 +55,19 @@ export default async function DashboardPage() {
 
         {flags.isDemoMode ? (
           <section className="rounded-[1.8rem] border border-sky-300/20 bg-sky-300/8 px-6 py-5 text-sm leading-7 text-sky-100">
-            Demo mode is active. You can inspect the seeded sample report and the rewrite lab now, then wire Supabase and OpenAI when you are ready for real uploads.
+            <p>
+              Demo mode is active. You can inspect the seeded sample report and the
+              rewrite lab now, then wire Supabase and OpenAI when you are ready for real
+              uploads.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link className="secondary-button" href="/dashboard/submissions/demo-report">
+                Open sample report
+              </Link>
+              <Link className="secondary-button" href="/setup">
+                Finish setup
+              </Link>
+            </div>
           </section>
         ) : null}
 

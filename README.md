@@ -35,6 +35,16 @@ npm run dev
 
 5. Open `http://localhost:3000`.
 
+## Demo mode
+
+If you start the app without Supabase keys, DraftLens now boots into a demo-friendly mode instead of feeling broken.
+
+- `/dashboard` loads a seeded sample workspace
+- `/dashboard/submissions/demo-report` shows a full example report
+- `/api/submissions/demo-report/rewrite` stays usable for local rewrite testing
+
+This makes the product easier to show, iterate on, and design before backend credentials are connected.
+
 ## Environment variables
 
 See `.env.example` for the full list. The important ones are:

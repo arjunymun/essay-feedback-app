@@ -54,6 +54,9 @@ export default async function Home() {
                 <Link className="secondary-button" href="/pricing">
                   See pricing path
                 </Link>
+                <Link className="secondary-button" href="/setup">
+                  Setup guide
+                </Link>
               </div>
             </div>
 
@@ -88,6 +91,27 @@ export default async function Home() {
             title="Resume-worthy build"
             description="Full-stack auth, uploads, AI analysis, citation verification, saved reports, and a clear business path make this a strong portfolio project and a realistic side-hustle foundation."
           />
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">How it works</p>
+            <ol className="mt-5 space-y-4 text-sm leading-7 text-[var(--muted)]">
+              <li>Upload a `.docx` or text PDF and DraftLens extracts the essay body, references, and citation signals.</li>
+              <li>The analysis pipeline scores the draft against a general academic rubric and highlights the highest-leverage fixes.</li>
+              <li>Crossref and OpenAlex checks look for likely source matches so weak or missing citations are easier to spot.</li>
+              <li>Students review saved reports, compare rewrite suggestions, and revise with a clearer plan.</li>
+            </ol>
+          </div>
+
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Build status</p>
+            <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--muted)]">
+              <li>Frontend, dashboard, report pages, and demo data are live on localhost now.</li>
+              <li>Supabase will unlock real auth, uploads, storage cleanup, and saved user history.</li>
+              <li>OpenAI will upgrade the fallback analysis into richer scoring and rewrite output.</li>
+            </ul>
+          </div>
         </section>
       </main>
     </div>
