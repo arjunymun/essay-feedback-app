@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { APP_NAME } from "@/lib/constants";
 import { env, flags } from "@/lib/env";
+import { getRuntimeSetupStatus } from "@/lib/setup-status";
 
 type SetupItemProps = {
   label: string;
@@ -29,7 +30,10 @@ function SetupItem({ label, ready, detail }: SetupItemProps) {
   );
 }
 
-export default function SetupPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SetupPage() {
+  const runtimeStatus = await getRuntimeSetupStatus();
   const steps = [
     {
       label: "Supabase public keys",
@@ -85,6 +89,32 @@ export default function SetupPage() {
             />
           ))}
         </section>
+
+        {runtimeStatus ? (
+          <section className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Live diagnostics</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <SetupItem
+                label="Supabase service connection"
+                ready={flags.hasSupabaseService}
+                detail="The app can reach your project with the server-side key."
+              />
+              <SetupItem
+                label="DraftLens tables"
+                ready={runtimeStatus.schemaReady}
+                detail="Checks whether the submissions and credit_ledger tables already exist in this Supabase project."
+              />
+              <SetupItem
+                label="Upload bucket"
+                ready={runtimeStatus.bucketReady}
+                detail="Checks whether the essay-uploads storage bucket exists for source files."
+              />
+            </div>
+            <p className="mt-5 text-sm leading-7 text-[var(--muted)]">
+              {runtimeStatus.message}
+            </p>
+          </section>
+        ) : null}
 
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="glass-card rounded-[2rem] p-6">
