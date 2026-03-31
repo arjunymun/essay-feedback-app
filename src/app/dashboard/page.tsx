@@ -4,9 +4,10 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { SubmissionList } from "@/components/dashboard/submission-list";
 import { UploadForm } from "@/components/dashboard/upload-form";
 import { requireUser } from "@/lib/auth";
-import { getCreditSummary, listUserSubmissions } from "@/lib/data";
+import { ensureSeedCredits, getCreditSummary, listUserSubmissions } from "@/lib/data";
 import { listDemoSubmissions, DEMO_CREDIT_SUMMARY } from "@/lib/demo";
 import { flags } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,11 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const [submissions, creditSummary] = flags.hasSupabasePublic
     ? await (async () => {
+        if (flags.hasSupabaseService) {
+          const admin = createSupabaseAdminClient();
+          await ensureSeedCredits(admin, user.id);
+        }
+
         const supabase = await createSupabaseServerClient();
         return Promise.all([
           listUserSubmissions(supabase, user.id),

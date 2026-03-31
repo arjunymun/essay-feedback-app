@@ -1,8 +1,9 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { requireUser } from "@/lib/auth";
-import { getCreditSummary } from "@/lib/data";
+import { ensureSeedCredits, getCreditSummary } from "@/lib/data";
 import { DEMO_CREDIT_SUMMARY } from "@/lib/demo";
 import { flags } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,11 @@ export default async function AccountPage() {
   const user = await requireUser();
   const creditSummary = flags.hasSupabasePublic
     ? await (async () => {
+        if (flags.hasSupabaseService) {
+          const admin = createSupabaseAdminClient();
+          await ensureSeedCredits(admin, user.id);
+        }
+
         const supabase = await createSupabaseServerClient();
         return getCreditSummary(supabase, user.id);
       })()
