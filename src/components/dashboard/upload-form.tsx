@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -13,11 +13,32 @@ export function UploadForm({
   creditsRemaining,
   demoMode = false,
 }: UploadFormProps) {
+  const progressLabels = [
+    "Uploading your document",
+    "Extracting essay text and citations",
+    "Scoring the draft against the rubric",
+    "Preparing your report",
+  ];
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progressIndex, setProgressIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!isPending) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setProgressIndex((current) =>
+        current < progressLabels.length - 1 ? current + 1 : current,
+      );
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [isPending, progressLabels.length]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,6 +48,8 @@ export function UploadForm({
       setError("Choose a DOCX or text-based PDF file first.");
       return;
     }
+
+    setProgressIndex(0);
 
     startTransition(async () => {
       try {
@@ -47,6 +70,7 @@ export function UploadForm({
         };
 
         if (!response.ok || !payload.submission) {
+          setProgressIndex(0);
           setError(payload.error ?? "The upload could not be analyzed.");
           return;
         }
@@ -54,6 +78,7 @@ export function UploadForm({
         router.push(`/dashboard/submissions/${payload.submission.id}`);
         router.refresh();
       } catch (unknownError) {
+        setProgressIndex(0);
         setError(
           unknownError instanceof Error
             ? unknownError.message
@@ -124,6 +149,78 @@ export function UploadForm({
           {demoMode ? "Backend setup required" : isPending ? "Analyzing..." : "Analyze essay"}
         </button>
       </form>
+
+      {file ? (
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="metric-card">
+            <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+              Selected file
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-white/6 px-3 py-1 text-sm text-[var(--foreground)]">
+                {file.name}
+              </span>
+              <span className="text-sm text-[var(--muted)]">
+                {(file.size / (1024 * 1024)).toFixed(2)} MB
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+              DraftLens stores the source file briefly for processing, then deletes it after
+              the analysis completes.
+            </p>
+          </div>
+
+          <div className="metric-card">
+            <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+              Before you upload
+            </p>
+            <ul className="mt-3 space-y-2 text-sm leading-7 text-[var(--muted)]">
+              <li>Use a text-based PDF or DOCX file.</li>
+              <li>Keep the essay under roughly 8,000 words.</li>
+              <li>Include a references section if you want citation checks.</li>
+            </ul>
+          </div>
+        </div>
+      ) : null}
+
+      {isPending ? (
+        <div className="mt-5 rounded-[1.6rem] border border-sky-300/20 bg-sky-300/8 p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="eyebrow">Analysis in progress</p>
+              <h3 className="mt-2 font-display text-2xl text-[var(--foreground)]">
+                Building your feedback report
+              </h3>
+            </div>
+            <p className="text-sm text-sky-100/80">This usually takes a few seconds.</p>
+          </div>
+
+          <div className="mt-5 upload-progress-bar">
+            <span
+              style={{
+                width: `${((progressIndex + 1) / progressLabels.length) * 100}%`,
+              }}
+            />
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {progressLabels.map((label, index) => {
+              const state =
+                index < progressIndex ? "done" : index === progressIndex ? "active" : "idle";
+
+              return (
+                <div
+                  key={label}
+                  className={`upload-progress-step upload-progress-step-${state}`}
+                >
+                  <span className="upload-progress-index">{index + 1}</span>
+                  <span>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
     </div>

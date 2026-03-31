@@ -16,8 +16,15 @@ type SubmissionListProps = {
 export function SubmissionList({ submissions }: SubmissionListProps) {
   if (!submissions.length) {
     return (
-      <div className="glass-card rounded-[2rem] p-8 text-sm leading-7 text-[var(--muted)]">
-        Your report history will appear here after the first upload.
+      <div className="glass-card rounded-[2rem] p-8">
+        <p className="eyebrow">No reports yet</p>
+        <h3 className="mt-3 font-display text-3xl text-[var(--foreground)]">
+          Your history will build from the first upload
+        </h3>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--muted)]">
+          Once you analyze a draft, DraftLens keeps the score, citation review, and
+          rewrite suggestions here so you can come back to them later.
+        </p>
       </div>
     );
   }
@@ -70,7 +77,7 @@ export function SubmissionList({ submissions }: SubmissionListProps) {
               <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
                 Words
               </span>
-              <span className="text-[var(--foreground)]">{submission.word_count || "—"}</span>
+              <span className="text-[var(--foreground)]">{submission.word_count || "-"}</span>
             </div>
             <div>
               <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
@@ -81,6 +88,19 @@ export function SubmissionList({ submissions }: SubmissionListProps) {
               </span>
             </div>
           </div>
+
+          {submission.status === "processing" ? (
+            <div className="rounded-[1.2rem] border border-sky-300/20 bg-sky-300/8 px-4 py-3 text-sm leading-7 text-sky-100">
+              Analysis is still running. Open this item in a moment to see the full score
+              breakdown and citation table.
+            </div>
+          ) : null}
+
+          {submission.status === "failed" && submission.error_message ? (
+            <div className="rounded-[1.2rem] border border-rose-300/20 bg-rose-300/8 px-4 py-3 text-sm leading-7 text-rose-100">
+              {submission.error_message}
+            </div>
+          ) : null}
         </Link>
       ))}
     </div>
