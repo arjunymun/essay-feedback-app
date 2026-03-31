@@ -176,6 +176,9 @@ export default async function SubmissionDetailPage({
                 <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
                   {submission.citation_style.toUpperCase()} citations
                 </span>
+                <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
+                  {flags.hasOpenAI ? "AI-assisted mode" : "Fallback mode"}
+                </span>
               </div>
             </div>
 
@@ -280,6 +283,11 @@ export default async function SubmissionDetailPage({
                   <p>
                     Citation statuses tell you how confident the metadata lookup is that a
                     source exists and matches the reference entry.
+                  </p>
+                  <p>
+                    {flags.hasOpenAI
+                      ? "This environment is using AI-assisted analysis, so summaries and rewrites can be more nuanced."
+                      : "This environment is using fallback analysis, so the report still works but the language generation is intentionally simpler."}
                   </p>
                 </div>
 

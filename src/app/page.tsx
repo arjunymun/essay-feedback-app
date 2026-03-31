@@ -105,11 +105,15 @@ export default async function Home() {
           </div>
 
           <div className="glass-card rounded-[2rem] p-6">
-            <p className="eyebrow">Build status</p>
+            <p className="eyebrow">Analysis mode</p>
             <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--muted)]">
-              <li>Frontend, dashboard, report pages, and demo data are live on localhost now.</li>
-              <li>Supabase will unlock real auth, uploads, storage cleanup, and saved user history.</li>
-              <li>OpenAI will upgrade the fallback analysis into richer scoring and rewrite output.</li>
+              <li>
+                {flags.hasOpenAI
+                  ? "This environment can use AI-assisted analysis for richer summaries and rewrites."
+                  : "This environment is currently running in fallback mode to avoid paid AI usage."}
+              </li>
+              <li>Supabase powers real auth, uploads, storage cleanup, and saved user history.</li>
+              <li>Citation verification still checks metadata confidence through academic source lookups.</li>
             </ul>
           </div>
         </section>

@@ -116,6 +116,26 @@ export default async function SetupPage() {
           </section>
         ) : null}
 
+        <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Current analysis mode</p>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              {flags.hasOpenAI
+                ? "OpenAI is connected here, so the app can generate richer summaries, stronger rewrites, and more nuanced rubric feedback."
+                : "OpenAI is not connected here, so DraftLens falls back to a cheaper heuristic mode. Uploads still work, but the writing feedback is less expressive."}
+            </p>
+          </div>
+
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">What confidence means</p>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              Citation confidence is a metadata quality signal, not a factual guarantee.
+              Use it to decide which references look dependable and which ones deserve a
+              manual spot-check.
+            </p>
+          </div>
+        </section>
+
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="glass-card rounded-[2rem] p-6">
             <p className="eyebrow">Next actions</p>
@@ -130,7 +150,7 @@ export default async function SetupPage() {
                 If your dashboard still shows the older names, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
                 and `SUPABASE_SERVICE_ROLE_KEY` also work.
               </li>
-              <li>Add `OPENAI_API_KEY` and keep `OPENAI_MODEL` on the default unless we intentionally change it.</li>
+              <li>Add `OPENAI_API_KEY` only if you want AI-assisted analysis instead of fallback-only mode.</li>
               <li>Run the SQL in `supabase/migrations/20260331_init.sql` against your Supabase project.</li>
               <li>Restart `npm run dev` and test sign-up, upload, and report generation end to end.</li>
             </ol>

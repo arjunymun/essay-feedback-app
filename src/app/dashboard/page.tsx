@@ -77,6 +77,35 @@ export default async function DashboardPage() {
           </section>
         ) : null}
 
+        <section className="grid gap-5 lg:grid-cols-3">
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">How scoring works</p>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              DraftLens combines rubric logic, citation checks, and writing-pattern
+              signals to estimate how strong the draft is across thesis, structure,
+              evidence, style, and citation quality.
+            </p>
+          </div>
+
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Citation confidence</p>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              Citation results are confidence signals, not absolute truth. A “matched”
+              source is a strong metadata match, while “possible match” and “not found”
+              are prompts for manual review.
+            </p>
+          </div>
+
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Current analysis mode</p>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              {flags.hasOpenAI
+                ? "AI-assisted analysis is available in this environment, so reports can include richer summaries and rewrite quality."
+                : "Fallback analysis mode is active in this environment, so the app still works without paid AI calls but uses simpler report generation."}
+            </p>
+          </div>
+        </section>
+
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
