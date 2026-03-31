@@ -10,6 +10,7 @@ DraftLens is a student-facing academic writing feedback app built with `Next.js`
 - OpenAI-powered rubric feedback with a heuristic fallback
 - Citation verification through Crossref and OpenAlex
 - Saved submission history and per-user credit ledger
+- Stripe test-mode checkout for paid credit packs
 - Automatic source-file deletion after processing
 - Rewrite endpoint for paragraph-level revisions
 
@@ -19,6 +20,7 @@ DraftLens is a student-facing academic writing feedback app built with `Next.js`
 - `TypeScript`
 - `Supabase` Auth, Postgres, and Storage
 - `OpenAI Responses API`
+- `Stripe Checkout`
 - `Tailwind CSS v4`
 - `Vitest`
 
@@ -26,7 +28,9 @@ DraftLens is a student-facing academic writing feedback app built with `Next.js`
 
 1. Copy `.env.example` to `.env.local`.
 2. Add your Supabase and OpenAI credentials. The app supports both the newer Supabase `publishable` / `secret` keys and the older `anon` / `service_role` keys.
-3. Run the SQL migration in `supabase/migrations/20260331_init.sql`.
+3. Run the SQL migrations in:
+   - `supabase/migrations/20260331_init.sql`
+   - `supabase/migrations/20260331_v15_billing.sql`
 4. Start the app:
 
 ```bash
@@ -55,6 +59,9 @@ See `.env.example` for the full list. The important ones are:
 - `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
 
 ## Available scripts
 
@@ -69,3 +76,4 @@ See `.env.example` for the full list. The important ones are:
 - The original uploaded file is stored briefly in Supabase Storage and removed after analysis completes.
 - The dashboard keeps structured report data and short excerpts, not the full essay body.
 - If `OPENAI_API_KEY` is missing, DraftLens falls back to heuristic scoring and rewrite suggestions so the rest of the stack remains testable.
+- Billing is implemented in Stripe test mode first; switch to live keys only when you are ready for real payments.

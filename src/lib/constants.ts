@@ -2,6 +2,7 @@ export const APP_NAME = "DraftLens";
 export const APP_TAGLINE = "Academic feedback, citation checks, and clearer revisions.";
 export const ESSAY_UPLOAD_BUCKET = "essay-uploads";
 export const FREE_ANALYSIS_CREDITS = 3;
+export const DEFAULT_CURRENCY = "usd";
 export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 export const MAX_WORDS = 8_000;
 export const MAX_REWRITE_CHARS = 1_600;
@@ -24,3 +25,5 @@ export const SCORE_LABELS: Record<(typeof SCORE_KEYS)[number], string> = {
   grammar_style: "Grammar & Style",
   citation_quality: "Citation Quality",
 };
+
+export const STARTER_PACK_KEY = "starter_pack_10";

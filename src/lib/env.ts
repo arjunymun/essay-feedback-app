@@ -25,6 +25,10 @@ export const env = {
   SUPABASE_SECRET_KEY: supabaseServiceKey,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY?.trim() || "",
   OPENAI_MODEL: process.env.OPENAI_MODEL?.trim() || "gpt-5-mini",
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() || "",
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY?.trim() || "",
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET?.trim() || "",
   OPENAI_USER_AGENT: `${APP_NAME}/0.1`,
 };
 
@@ -36,6 +40,10 @@ export const flags = {
     Boolean(env.NEXT_PUBLIC_SUPABASE_URL) &&
     Boolean(env.SUPABASE_SERVICE_ROLE_KEY),
   hasOpenAI: Boolean(env.OPENAI_API_KEY),
+  hasStripePublishable: Boolean(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
+  hasStripeSecret: Boolean(env.STRIPE_SECRET_KEY),
+  hasStripeWebhookSecret: Boolean(env.STRIPE_WEBHOOK_SECRET),
+  hasStripe: Boolean(env.STRIPE_SECRET_KEY),
   isDemoMode:
     !(
       Boolean(env.NEXT_PUBLIC_SUPABASE_URL) &&

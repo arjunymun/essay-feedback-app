@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { FREE_ANALYSIS_CREDITS } from "@/lib/constants";
 import type {
+  CreditPurchaseRecord,
   CreditLedgerEntry,
   CreditSummary,
   EssayReport,
@@ -83,23 +84,32 @@ export async function getCreditSummary(
 ): Promise<CreditSummary> {
   const { data, error } = await client
     .from("credit_ledger")
-    .select("delta")
+    .select("delta, kind")
     .eq("user_id", userId);
 
   if (error) {
     throw new AppError(error.message, 500);
   }
 
-  const deltas = (data ?? []).map((entry) => Number(entry.delta ?? 0));
+  const entries = (data ?? []).map((entry) => ({
+    delta: Number(entry.delta ?? 0),
+    kind: String(entry.kind ?? ""),
+  }));
+  const deltas = entries.map((entry) => entry.delta);
   const totalAwarded = deltas.filter((value) => value > 0).reduce((a, b) => a + b, 0);
   const totalConsumed = Math.abs(
     deltas.filter((value) => value < 0).reduce((a, b) => a + b, 0),
   );
+  const totalPurchased = entries
+    .filter((entry) => entry.kind === "purchase" && entry.delta > 0)
+    .reduce((sum, entry) => sum + entry.delta, 0);
 
   return {
     remaining: deltas.reduce((a, b) => a + b, 0),
     totalAwarded,
     totalConsumed,
+    totalPurchased,
+    totalFreeCredits: totalAwarded - totalPurchased,
   };
 }
 
@@ -112,7 +122,7 @@ export async function reserveCredit(
   const summary = await getCreditSummary(admin, userId);
   if (summary.remaining <= 0) {
     throw new AppError(
-      "You have used all free analyses for now. Join the pricing waitlist for phase 2 access.",
+      "You have used all available credits. Buy a starter pack to keep analyzing essays.",
       402,
     );
   }
@@ -176,6 +186,144 @@ export async function setSubmissionStoragePath(
   if (error) {
     throw new AppError(error.message, 500);
   }
+}
+
+function asCreditPurchaseRecord(row: unknown) {
+  return row as CreditPurchaseRecord;
+}
+
+export async function listCreditPurchasesForUser(
+  client: SupabaseClient,
+  userId: string,
+) {
+  const { data, error } = await client
+    .from("credit_purchases")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new AppError(error.message, 500);
+  }
+
+  return (data ?? []).map(asCreditPurchaseRecord);
+}
+
+export async function getLatestCreditPurchaseForUser(
+  client: SupabaseClient,
+  userId: string,
+) {
+  const { data, error } = await client
+    .from("credit_purchases")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new AppError(error.message, 500);
+  }
+
+  return data ? asCreditPurchaseRecord(data) : null;
+}
+
+export async function fulfillCreditPurchase(
+  admin: SupabaseClient,
+  values: {
+    userId: string;
+    stripeCheckoutSessionId: string;
+    stripePaymentIntentId?: string | null;
+    packKey: string;
+    creditsAwarded: number;
+    paymentStatus: string;
+  },
+) {
+  const { data: existing, error: lookupError } = await admin
+    .from("credit_purchases")
+    .select("*")
+    .eq("stripe_checkout_session_id", values.stripeCheckoutSessionId)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw new AppError(lookupError.message, 500);
+  }
+
+  if (existing?.fulfilled_at) {
+    return {
+      alreadyFulfilled: true,
+      purchase: asCreditPurchaseRecord(existing),
+    };
+  }
+
+  const purchasePayload = {
+    user_id: values.userId,
+    stripe_checkout_session_id: values.stripeCheckoutSessionId,
+    stripe_payment_intent_id: values.stripePaymentIntentId ?? null,
+    pack_key: values.packKey,
+    credits_awarded: values.creditsAwarded,
+    payment_status: values.paymentStatus,
+  };
+
+  const purchase = existing
+    ? await (async () => {
+        const { data, error } = await admin
+          .from("credit_purchases")
+          .update(purchasePayload)
+          .eq("id", existing.id)
+          .select("*")
+          .single();
+
+        if (error) {
+          throw new AppError(error.message, 500);
+        }
+
+        return asCreditPurchaseRecord(data);
+      })()
+    : await (async () => {
+        const { data, error } = await admin
+          .from("credit_purchases")
+          .insert(purchasePayload)
+          .select("*")
+          .single();
+
+        if (error) {
+          throw new AppError(error.message, 500);
+        }
+
+        return asCreditPurchaseRecord(data);
+      })();
+
+  const { error: ledgerError } = await admin.from("credit_ledger").insert({
+    user_id: values.userId,
+    delta: values.creditsAwarded,
+    kind: "purchase",
+    note: `Purchased ${values.creditsAwarded} analysis credits via Stripe (${values.packKey}).`,
+  });
+
+  if (ledgerError) {
+    throw new AppError(ledgerError.message, 500);
+  }
+
+  const { data: fulfilledPurchase, error: fulfilledError } = await admin
+    .from("credit_purchases")
+    .update({
+      payment_status: "fulfilled",
+      fulfilled_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", purchase.id)
+    .select("*")
+    .single();
+
+  if (fulfilledError) {
+    throw new AppError(fulfilledError.message, 500);
+  }
+
+  return {
+    alreadyFulfilled: false,
+    purchase: asCreditPurchaseRecord(fulfilledPurchase),
+  };
 }
 
 export async function finalizeSubmission(

@@ -13,6 +13,8 @@ export const DEMO_CREDIT_SUMMARY: CreditSummary = {
   remaining: 3,
   totalAwarded: 3,
   totalConsumed: 0,
+  totalPurchased: 0,
+  totalFreeCredits: 3,
 };
 
 export const DEMO_REPORT: EssayReport = {

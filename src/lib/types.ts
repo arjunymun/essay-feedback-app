@@ -13,7 +13,13 @@ export type CreditLedgerKind =
   | "reserved"
   | "consumed"
   | "released"
-  | "adjustment";
+  | "adjustment"
+  | "purchase";
+
+export type CreditPurchaseStatus =
+  | "pending"
+  | "completed"
+  | "fulfilled";
 
 export interface RubricScore {
   key: ScoreKey;
@@ -93,6 +99,30 @@ export interface CreditSummary {
   remaining: number;
   totalAwarded: number;
   totalConsumed: number;
+  totalPurchased: number;
+  totalFreeCredits: number;
+}
+
+export interface CreditPurchaseRecord {
+  id: string;
+  user_id: string;
+  stripe_checkout_session_id: string;
+  stripe_payment_intent_id: string | null;
+  pack_key: string;
+  credits_awarded: number;
+  payment_status: CreditPurchaseStatus;
+  fulfilled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreditPackDefinition {
+  key: string;
+  name: string;
+  description: string;
+  credits: number;
+  unitAmount: number;
+  currency: string;
 }
 
 export interface UploadMetadata {

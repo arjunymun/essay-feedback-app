@@ -4,6 +4,9 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { BuyCreditsButton } from "@/components/billing/buy-credits-button";
+import { STARTER_PACK_KEY } from "@/lib/constants";
+
 type UploadFormProps = {
   creditsRemaining: number;
   demoMode?: boolean;
@@ -66,6 +69,7 @@ export function UploadForm({
 
         const payload = (await response.json()) as {
           error?: string;
+          code?: string;
           submission?: { id: string };
         };
 
@@ -101,7 +105,7 @@ export function UploadForm({
           </p>
         </div>
         <div className="rounded-full border border-[var(--border)] px-4 py-2 text-sm text-[var(--muted)]">
-          {creditsRemaining} free analyses remaining
+          {creditsRemaining} credits remaining
         </div>
       </div>
 
@@ -223,6 +227,22 @@ export function UploadForm({
       ) : null}
 
       {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
+      {error?.includes("available credits") ? (
+        <div className="mt-4 rounded-[1.4rem] border border-amber-300/20 bg-amber-300/8 p-4 text-sm leading-7 text-amber-100">
+          <p className="font-medium">You are out of credits.</p>
+          <p className="mt-2 text-amber-100/85">
+            Buy the starter pack to unlock 10 more analyses and keep using the full workflow.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <BuyCreditsButton className="primary-button" packKey={STARTER_PACK_KEY}>
+              Buy 10 more analyses
+            </BuyCreditsButton>
+            <Link className="secondary-button" href="/pricing">
+              View pricing
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

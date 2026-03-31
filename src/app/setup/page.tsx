@@ -53,6 +53,18 @@ export default async function SetupPage() {
       detail:
         "Needed for richer scoring, stronger rewrite quality, and the full structured analysis pipeline.",
     },
+    {
+      label: "Stripe secret key",
+      ready: flags.hasStripeSecret,
+      detail:
+        "Needed to create Checkout Sessions for paid credit packs and process billing test flows.",
+    },
+    {
+      label: "Stripe webhook secret",
+      ready: flags.hasStripeWebhookSecret,
+      detail:
+        "Needed to verify Stripe webhook signatures before purchased credits are fulfilled into the ledger.",
+    },
   ];
 
   return (
@@ -79,7 +91,7 @@ export default async function SetupPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-5">
           {steps.map((step) => (
             <SetupItem
               key={step.label}
@@ -134,6 +146,15 @@ export default async function SetupPage() {
               manual spot-check.
             </p>
           </div>
+
+          <div className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Billing mode</p>
+            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+              {flags.hasStripeSecret
+                ? "Stripe test-mode billing can be wired in this environment once the webhook secret is configured."
+                : "Stripe is not connected here yet, so paid credit packs cannot be purchased from this environment."}
+            </p>
+          </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
@@ -151,7 +172,8 @@ export default async function SetupPage() {
                 and `SUPABASE_SERVICE_ROLE_KEY` also work.
               </li>
               <li>Add `OPENAI_API_KEY` only if you want AI-assisted analysis instead of fallback-only mode.</li>
-              <li>Run the SQL in `supabase/migrations/20260331_init.sql` against your Supabase project.</li>
+              <li>Add `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` for billing sandbox mode.</li>
+              <li>Run the SQL in `supabase/migrations/20260331_init.sql` and `supabase/migrations/20260331_v15_billing.sql` against your Supabase project.</li>
               <li>Restart `npm run dev` and test sign-up, upload, and report generation end to end.</li>
             </ol>
           </div>
