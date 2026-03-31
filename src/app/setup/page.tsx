@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { APP_NAME } from "@/lib/constants";
-import { flags } from "@/lib/env";
+import { env, flags } from "@/lib/env";
 
 type SetupItemProps = {
   label: string;
@@ -35,13 +35,13 @@ export default function SetupPage() {
       label: "Supabase public keys",
       ready: flags.hasSupabasePublic,
       detail:
-        "Needed for browser auth, route protection, and loading real user submissions instead of demo data.",
+        "Needed for browser auth, route protection, and loading real user submissions instead of demo data. The app accepts either the newer publishable key or the older anon key.",
     },
     {
-      label: "Supabase service role",
+      label: "Supabase server key",
       ready: flags.hasSupabaseService,
       detail:
-        "Needed for privileged database writes, credit ledger updates, and source-file cleanup after analysis.",
+        "Needed for privileged database writes, credit ledger updates, and source-file cleanup after analysis. The app accepts either the newer secret key or the older service-role key.",
     },
     {
       label: "OpenAI API key",
@@ -91,7 +91,15 @@ export default function SetupPage() {
             <p className="eyebrow">Next actions</p>
             <ol className="mt-4 space-y-4 text-sm leading-7 text-[var(--muted)]">
               <li>Create `.env.local` from `.env.example`.</li>
-              <li>Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.</li>
+              <li>
+                Add `NEXT_PUBLIC_SUPABASE_PROJECT_REF=qhjsrxmjbbluswomychr` or set
+                `NEXT_PUBLIC_SUPABASE_URL=https://qhjsrxmjbbluswomychr.supabase.co`.
+              </li>
+              <li>
+                Add `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`.
+                If your dashboard still shows the older names, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+                and `SUPABASE_SERVICE_ROLE_KEY` also work.
+              </li>
               <li>Add `OPENAI_API_KEY` and keep `OPENAI_MODEL` on the default unless we intentionally change it.</li>
               <li>Run the SQL in `supabase/migrations/20260331_init.sql` against your Supabase project.</li>
               <li>Restart `npm run dev` and test sign-up, upload, and report generation end to end.</li>
@@ -105,6 +113,9 @@ export default function SetupPage() {
               <li>Demo submissions and the report detail view are available immediately.</li>
               <li>The rewrite endpoint stays callable locally, even before OpenAI is connected.</li>
               <li>Build, lint, and tests are already passing on the current codebase.</li>
+              {env.NEXT_PUBLIC_SUPABASE_PROJECT_REF ? (
+                <li>Project reference detected: `{env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}`.</li>
+              ) : null}
             </ul>
           </div>
         </section>

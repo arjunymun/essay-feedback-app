@@ -25,7 +25,7 @@ DraftLens is a student-facing academic writing feedback app built with `Next.js`
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Add your Supabase and OpenAI credentials.
+2. Add your Supabase and OpenAI credentials. The app supports both the newer Supabase `publishable` / `secret` keys and the older `anon` / `service_role` keys.
 3. Run the SQL migration in `supabase/migrations/20260331_init.sql`.
 4. Start the app:
 
@@ -50,8 +50,9 @@ This makes the product easier to show, iterate on, and design before backend cre
 See `.env.example` for the full list. The important ones are:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PROJECT_REF`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
 
