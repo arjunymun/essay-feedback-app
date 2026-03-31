@@ -1,0 +1,13 @@
+
+> essay-feedback-app@0.1.0 dev
+> next dev --webpack
+
+▲ Next.js 16.2.1 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.199.1:3000
+✓ Ready in 705ms
+
+○ Compiling / ...
+ GET / 200 in 928ms (next.js: 8ms, proxy.ts: 715ms, application-code: 205ms)
+ GET / 200 in 939ms (next.js: 86ms, proxy.ts: 715ms, application-code: 137ms)
+ GET / 200 in 965ms (next.js: 54ms, proxy.ts: 715ms, application-code: 196ms)

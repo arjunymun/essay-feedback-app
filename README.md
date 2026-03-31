@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DraftLens
 
-## Getting Started
+DraftLens is a student-facing academic writing feedback app built with `Next.js`, Supabase, and OpenAI. Students can sign in, upload a `.docx` or text-based `.pdf`, receive rubric-based essay feedback, citation verification for `APA` and `MLA`, and generate natural-voice rewrites for selected passages.
 
-First, run the development server:
+## What this MVP includes
+
+- Supabase email and password auth
+- Upload flow for `DOCX` and text PDFs
+- Essay parsing and validation limits
+- OpenAI-powered rubric feedback with a heuristic fallback
+- Citation verification through Crossref and OpenAlex
+- Saved submission history and per-user credit ledger
+- Automatic source-file deletion after processing
+- Rewrite endpoint for paragraph-level revisions
+
+## Tech stack
+
+- `Next.js 16` App Router
+- `TypeScript`
+- `Supabase` Auth, Postgres, and Storage
+- `OpenAI Responses API`
+- `Tailwind CSS v4`
+- `Vitest`
+
+## Local setup
+
+1. Copy `.env.example` to `.env.local`.
+2. Add your Supabase and OpenAI credentials.
+3. Run the SQL migration in `supabase/migrations/20260331_init.sql`.
+4. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example` for the full list. The important ones are:
 
-## Learn More
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
 
-To learn more about Next.js, take a look at the following resources:
+## Available scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The original uploaded file is stored briefly in Supabase Storage and removed after analysis completes.
+- The dashboard keeps structured report data and short excerpts, not the full essay body.
+- If `OPENAI_API_KEY` is missing, DraftLens falls back to heuristic scoring and rewrite suggestions so the rest of the stack remains testable.

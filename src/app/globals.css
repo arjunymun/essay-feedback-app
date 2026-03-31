@@ -1,26 +1,164 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0f1116;
+  --surface: #141924;
+  --surface-strong: #1b2131;
+  --foreground: #f6efe6;
+  --muted: #cbbdaa;
+  --muted-soft: #9b9286;
+  --accent: #f2a556;
+  --accent-strong: #ffc38b;
+  --border: rgba(255, 245, 235, 0.1);
+  --border-strong: rgba(255, 245, 235, 0.18);
+  --danger: #f87171;
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-sans: Aptos, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background:
+    radial-gradient(circle at top left, rgba(242, 165, 86, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(94, 173, 255, 0.14), transparent 20%),
+    linear-gradient(180deg, #121721 0%, #0d1016 55%, #090b10 100%);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), sans-serif;
+}
+
+a,
+button {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: var(--font-display), serif;
+}
+
+.glass-card {
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+    rgba(10, 12, 18, 0.56);
+  box-shadow: 0 24px 100px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+.hero-card {
+  border: 1px solid var(--border-strong);
+  background:
+    linear-gradient(135deg, rgba(255, 210, 162, 0.12), transparent 35%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(9, 12, 18, 0.7);
+  box-shadow: 0 32px 120px rgba(0, 0, 0, 0.24);
+}
+
+.eyebrow {
+  font-size: 0.74rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), #ffcb88);
+  padding: 0.95rem 1.4rem;
+  font-weight: 600;
+  color: #1b140d;
+}
+
+.primary-button:hover {
+  transform: translateY(-1px);
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  padding: 0.95rem 1.4rem;
+  color: var(--foreground);
+}
+
+.secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.input-field {
+  width: 100%;
+  border-radius: 1.2rem;
+  border: 1px solid var(--border-strong);
+  background: rgba(7, 10, 15, 0.5);
+  padding: 0.95rem 1rem;
+  color: var(--foreground);
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: rgba(255, 195, 139, 0.5);
+}
+
+.input-file {
+  width: 100%;
+  border-radius: 1.2rem;
+  border: 1px dashed var(--border-strong);
+  background: rgba(7, 10, 15, 0.4);
+  padding: 0.78rem 1rem;
+  color: var(--muted);
+}
+
+.metric-card {
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+}
+
+.table-shell {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.table-shell table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-shell th,
+.table-shell td {
+  border-top: 1px solid var(--border);
+  padding: 0.95rem 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table-shell tr:first-child th,
+.table-shell tr:first-child td {
+  border-top: 0;
 }
