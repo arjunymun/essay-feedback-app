@@ -16,7 +16,8 @@ const supabaseServiceKey =
 
 export const env = {
   NEXT_PUBLIC_APP_URL:
-    process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000",
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"),
   NEXT_PUBLIC_SUPABASE_PROJECT_REF: supabaseProjectRef,
   NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: supabasePublicKey,
