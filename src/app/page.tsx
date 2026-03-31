@@ -41,8 +41,15 @@ export default async function Home() {
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <Link className="primary-button" href={user ? "/dashboard" : "/sign-up"}>
-                  {user ? "Open dashboard" : "Start free"}
+                <Link
+                  className="primary-button"
+                  href={user ? "/dashboard" : flags.isDemoMode ? "/dashboard" : "/sign-up"}
+                >
+                  {user
+                    ? "Open dashboard"
+                    : flags.isDemoMode
+                      ? "Try demo workspace"
+                      : "Start free"}
                 </Link>
                 <Link className="secondary-button" href="/pricing">
                   See pricing path

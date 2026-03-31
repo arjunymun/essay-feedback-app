@@ -31,7 +31,22 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          <AuthForm mode="sign-up" />
+          {flags.hasSupabasePublic ? (
+            <AuthForm mode="sign-up" />
+          ) : (
+            <div className="glass-card rounded-[2rem] p-8">
+              <p className="eyebrow">Demo access</p>
+              <h1 className="mt-4 font-display text-4xl text-[var(--foreground)]">
+                Backend-free preview
+              </h1>
+              <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+                Until Supabase is wired in, this project exposes a demo workspace so you can inspect the product surface and the sample analysis experience.
+              </p>
+              <Link className="primary-button mt-6" href="/dashboard">
+                Open demo workspace
+              </Link>
+            </div>
+          )}
         </div>
       </main>
     </div>

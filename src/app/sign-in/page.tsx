@@ -31,7 +31,22 @@ export default function SignInPage() {
             </p>
           </div>
 
-          <AuthForm mode="sign-in" />
+          {flags.hasSupabasePublic ? (
+            <AuthForm mode="sign-in" />
+          ) : (
+            <div className="glass-card rounded-[2rem] p-8">
+              <p className="eyebrow">Demo access</p>
+              <h1 className="mt-4 font-display text-4xl text-[var(--foreground)]">
+                Explore the app without auth
+              </h1>
+              <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+                Supabase is not configured yet, so localhost is running in demo mode. You can still walk through the dashboard and sample report right now.
+              </p>
+              <Link className="primary-button mt-6" href="/dashboard">
+                Enter demo workspace
+              </Link>
+            </div>
+          )}
         </div>
       </main>
     </div>

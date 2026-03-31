@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { flags } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function SignOutButton() {
@@ -15,8 +16,10 @@ export function SignOutButton() {
       disabled={isPending}
       onClick={() => {
         startTransition(async () => {
-          const supabase = createSupabaseBrowserClient();
-          await supabase.auth.signOut();
+          if (flags.hasSupabasePublic) {
+            const supabase = createSupabaseBrowserClient();
+            await supabase.auth.signOut();
+          }
           router.push("/");
           router.refresh();
         });

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { RewriteLab } from "@/components/dashboard/rewrite-lab";
 import { requireUser } from "@/lib/auth";
 import { getSubmissionForUser } from "@/lib/data";
+import { getDemoSubmissionById } from "@/lib/demo";
+import { flags } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CitationVerificationResult, RubricScore } from "@/lib/types";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -49,9 +51,13 @@ export default async function SubmissionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await requireUser();
-  const supabase = await createSupabaseServerClient();
-  const submission = await getSubmissionForUser(supabase, id, user.id);
+  const submission = flags.hasSupabasePublic
+    ? await (async () => {
+        const user = await requireUser();
+        const supabase = await createSupabaseServerClient();
+        return getSubmissionForUser(supabase, id, user.id);
+      })()
+    : getDemoSubmissionById(id);
 
   if (!submission) {
     notFound();
@@ -79,7 +85,7 @@ export default async function SubmissionDetailPage({
                 Overall score
               </p>
               <p className="mt-2 font-display text-5xl text-[var(--foreground)]">
-                {submission.overall_score ?? "—"}
+                {submission.overall_score ?? "-"}
               </p>
             </div>
           </div>
@@ -114,6 +120,14 @@ export default async function SubmissionDetailPage({
               </p>
             </div>
           </div>
+
+          {flags.isDemoMode ? (
+            <div className="mt-6 rounded-[1.5rem] border border-sky-400/30 bg-sky-400/10 px-5 py-4 text-sm leading-7 text-sky-100">
+              Demo mode is active. This report is sample data so you can review the
+              scoring, citation table, and rewrite flow before connecting Supabase and
+              OpenAI.
+            </div>
+          ) : null}
         </section>
 
         {report ? (

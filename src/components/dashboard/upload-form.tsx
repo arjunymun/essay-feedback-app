@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type UploadFormProps = {
   creditsRemaining: number;
+  demoMode?: boolean;
 };
 
-export function UploadForm({ creditsRemaining }: UploadFormProps) {
+export function UploadForm({
+  creditsRemaining,
+  demoMode = false,
+}: UploadFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -75,6 +80,21 @@ export function UploadForm({ creditsRemaining }: UploadFormProps) {
         </div>
       </div>
 
+      {demoMode ? (
+        <div className="mt-6 rounded-[1.5rem] border border-sky-300/20 bg-sky-300/8 p-5 text-sm leading-7 text-sky-100">
+          <p className="font-medium">Demo mode is active</p>
+          <p className="mt-2 text-sky-100/80">
+            The full upload pipeline needs Supabase and OpenAI keys. You can still explore the product from the seeded sample report.
+          </p>
+          <Link
+            className="mt-4 inline-flex rounded-full border border-sky-200/30 px-4 py-2 text-sm"
+            href="/dashboard/submissions/demo-report"
+          >
+            Open demo report
+          </Link>
+        </div>
+      ) : null}
+
       <form className="mt-6 grid gap-5 md:grid-cols-[1.2fr_1fr_auto]" onSubmit={handleSubmit}>
         <label className="space-y-2">
           <span className="text-sm text-[var(--muted)]">Essay title</span>
@@ -98,10 +118,10 @@ export function UploadForm({ creditsRemaining }: UploadFormProps) {
 
         <button
           className="primary-button h-[52px] self-end"
-          disabled={isPending || creditsRemaining <= 0}
+          disabled={demoMode || isPending || creditsRemaining <= 0}
           type="submit"
         >
-          {isPending ? "Analyzing..." : "Analyze essay"}
+          {demoMode ? "Backend setup required" : isPending ? "Analyzing..." : "Analyze essay"}
         </button>
       </form>
 

@@ -5,17 +5,23 @@ import { SubmissionList } from "@/components/dashboard/submission-list";
 import { UploadForm } from "@/components/dashboard/upload-form";
 import { requireUser } from "@/lib/auth";
 import { getCreditSummary, listUserSubmissions } from "@/lib/data";
+import { listDemoSubmissions, DEMO_CREDIT_SUMMARY } from "@/lib/demo";
+import { flags } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const supabase = await createSupabaseServerClient();
-  const [submissions, creditSummary] = await Promise.all([
-    listUserSubmissions(supabase, user.id),
-    getCreditSummary(supabase, user.id),
-  ]);
+  const [submissions, creditSummary] = flags.hasSupabasePublic
+    ? await (async () => {
+        const supabase = await createSupabaseServerClient();
+        return Promise.all([
+          listUserSubmissions(supabase, user.id),
+          getCreditSummary(supabase, user.id),
+        ]);
+      })()
+    : [listDemoSubmissions(), DEMO_CREDIT_SUMMARY];
 
   return (
     <div className="page-shell">
@@ -43,6 +49,12 @@ export default async function DashboardPage() {
         </section>
 
         <UploadForm creditsRemaining={creditSummary.remaining} />
+
+        {flags.isDemoMode ? (
+          <section className="rounded-[1.8rem] border border-sky-300/20 bg-sky-300/8 px-6 py-5 text-sm leading-7 text-sky-100">
+            Demo mode is active. You can inspect the seeded sample report and the rewrite lab now, then wire Supabase and OpenAI when you are ready for real uploads.
+          </section>
+        ) : null}
 
         <section className="space-y-4">
           <div className="flex items-center justify-between">

@@ -21,4 +21,9 @@ export const flags = {
     Boolean(env.NEXT_PUBLIC_SUPABASE_URL) &&
     Boolean(env.SUPABASE_SERVICE_ROLE_KEY),
   hasOpenAI: Boolean(env.OPENAI_API_KEY),
+  isDemoMode:
+    !(
+      Boolean(env.NEXT_PUBLIC_SUPABASE_URL) &&
+      Boolean(env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    ),
 };

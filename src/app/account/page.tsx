@@ -1,14 +1,20 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { requireUser } from "@/lib/auth";
 import { getCreditSummary } from "@/lib/data";
+import { DEMO_CREDIT_SUMMARY } from "@/lib/demo";
+import { flags } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const user = await requireUser();
-  const supabase = await createSupabaseServerClient();
-  const creditSummary = await getCreditSummary(supabase, user.id);
+  const creditSummary = flags.hasSupabasePublic
+    ? await (async () => {
+        const supabase = await createSupabaseServerClient();
+        return getCreditSummary(supabase, user.id);
+      })()
+    : DEMO_CREDIT_SUMMARY;
 
   return (
     <div className="page-shell">
@@ -50,6 +56,11 @@ export default async function AccountPage() {
           <p className="mt-4">
             DraftLens stores structured report data and short excerpts for dashboard history. The original uploaded file and full extracted essay text are removed after processing completes.
           </p>
+          {flags.isDemoMode ? (
+            <p className="mt-4 text-sky-200">
+              You are currently viewing demo-mode data because Supabase is not configured on this machine yet.
+            </p>
+          ) : null}
         </section>
       </main>
     </div>
