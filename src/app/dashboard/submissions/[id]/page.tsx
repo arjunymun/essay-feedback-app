@@ -128,10 +128,14 @@ function InfoPill({
 
 export default async function SubmissionDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ fresh?: string }>;
 }) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const isFreshReport = resolvedSearchParams?.fresh === "1";
   const submission = flags.hasSupabasePublic
     ? await (async () => {
         const user = await requireUser();
@@ -151,6 +155,16 @@ export default async function SubmissionDetailPage({
     <div className="page-shell">
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8 lg:px-10">
         <section className="glass-card rounded-[2.5rem] p-8">
+          {isFreshReport && submission.report_json ? (
+            <div className="mb-6 rounded-[1.5rem] border border-emerald-300/25 bg-emerald-300/10 px-5 py-4 text-sm leading-7 text-emerald-100">
+              <p className="font-medium">Report ready</p>
+              <p className="mt-2 text-emerald-100/85">
+                Your draft has been scored, the citation checks are ready to review, and the
+                original upload has already been removed from storage after processing.
+              </p>
+            </div>
+          ) : null}
+
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <p className="eyebrow">Analysis report</p>
@@ -393,8 +407,21 @@ export default async function SubmissionDetailPage({
             />
           </>
         ) : (
-          <section className="glass-card rounded-[2rem] p-6 text-sm text-rose-300">
-            {submission.error_message ?? "This submission has not finished processing yet."}
+          <section className="glass-card rounded-[2rem] p-6">
+            <p className="eyebrow">Analysis status</p>
+            <div className="mt-4 space-y-4 text-sm leading-7">
+              <p className="text-rose-300">
+                {submission.error_message ?? "This submission has not finished processing yet."}
+              </p>
+              <p className="text-[var(--muted)]">
+                If this run failed, your reserved credit should be released automatically so you
+                can upload a corrected file and try again.
+              </p>
+              <p className="text-[var(--muted)]">
+                Best results come from text-based PDFs or DOCX files with a clear references
+                section and standard paragraph structure.
+              </p>
+            </div>
           </section>
         )}
       </main>

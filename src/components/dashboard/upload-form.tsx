@@ -75,7 +75,7 @@ export function UploadForm({
           return;
         }
 
-        router.push(`/dashboard/submissions/${payload.submission.id}`);
+        router.push(`/dashboard/submissions/${payload.submission.id}?fresh=1`);
         router.refresh();
       } catch (unknownError) {
         setProgressIndex(0);
