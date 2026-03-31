@@ -105,7 +105,7 @@ export default async function SetupPage() {
         {runtimeStatus ? (
           <section className="glass-card rounded-[2rem] p-6">
             <p className="eyebrow">Live diagnostics</p>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div className="mt-4 grid gap-4 md:grid-cols-4">
               <SetupItem
                 label="Supabase service connection"
                 ready={flags.hasSupabaseService}
@@ -115,6 +115,11 @@ export default async function SetupPage() {
                 label="DraftLens tables"
                 ready={runtimeStatus.schemaReady}
                 detail="Checks whether the submissions and credit_ledger tables already exist in this Supabase project."
+              />
+              <SetupItem
+                label="Billing tables"
+                ready={runtimeStatus.billingReady}
+                detail="Checks whether the credit_purchases table exists for Stripe purchase fulfillment."
               />
               <SetupItem
                 label="Upload bucket"
