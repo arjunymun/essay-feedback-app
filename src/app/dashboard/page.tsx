@@ -90,9 +90,9 @@ export default async function DashboardPage() {
           <div className="glass-card rounded-[2rem] p-6">
             <p className="eyebrow">Citation confidence</p>
             <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-              Citation results are confidence signals, not absolute truth. A “matched”
-              source is a strong metadata match, while “possible match” and “not found”
-              are prompts for manual review.
+              Citation results are confidence signals, not absolute truth. A &quot;matched&quot;
+              source is a strong metadata match, while &quot;possible match&quot; and
+              &quot;not found&quot; are prompts for manual review.
             </p>
           </div>
 
@@ -121,3 +121,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
