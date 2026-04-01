@@ -67,19 +67,29 @@ export function UploadForm({
           body: formData,
         });
 
-        const payload = (await response.json()) as {
-          error?: string;
-          code?: string;
-          submission?: { id: string };
-        };
+        const payload = response.headers
+          .get("content-type")
+          ?.includes("application/json")
+          ? ((await response.json()) as {
+              error?: string;
+              code?: string;
+              submission?: { id: string };
+            })
+          : null;
 
-        if (!response.ok || !payload.submission) {
+        if (!response.ok || !payload?.submission) {
+          const fallbackError = response.ok
+            ? "The upload could not be analyzed."
+            : "The upload failed unexpectedly. Please try again with a text-based PDF or DOCX file.";
+
           setProgressIndex(0);
-          setError(payload.error ?? "The upload could not be analyzed.");
+          setError(payload?.error ?? fallbackError);
           return;
         }
 
-        router.push(`/dashboard/submissions/${payload.submission.id}?fresh=1`);
+        const submission = payload.submission;
+
+        router.push(`/dashboard/submissions/${submission.id}?fresh=1`);
         router.refresh();
       } catch (unknownError) {
         setProgressIndex(0);

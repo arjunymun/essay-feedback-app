@@ -18,6 +18,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { UploadMetadata } from "@/lib/types";
 import { AppError, slugify } from "@/lib/utils";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   if (!flags.hasSupabasePublic || !flags.hasSupabaseService) {
     return NextResponse.json(
