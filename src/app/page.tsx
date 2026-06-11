@@ -1,12 +1,64 @@
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardCheck,
+  FileCheck2,
+  Layers3,
+  SearchCheck,
+  ShieldCheck,
+  Sparkles,
+  Workflow,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { SetupNotice } from "@/components/dashboard/setup-notice";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { TrustOrbitScene } from "@/components/marketing/trust-orbit-scene";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
-import { flags } from "@/lib/env";
 import { getCurrentUser } from "@/lib/auth";
+import { flags } from "@/lib/env";
 
-function FeatureCard({
+type Feature = {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+const featureCards: Feature[] = [
+  {
+    title: "Claim-level findings",
+    description:
+      "DraftLens extracts important statements, labels support requirements, and shows the reviewer which claims are strong, partial, or unsupported.",
+    icon: FileCheck2,
+  },
+  {
+    title: "Verifier pass",
+    description:
+      "Citations, references, named entities, quotations, and source metadata are checked separately from the writing-quality rubric.",
+    icon: SearchCheck,
+  },
+  {
+    title: "Traceable review runs",
+    description:
+      "Each review can expose job stages, model usage, uncertainty, and failure-safe reasons instead of hiding everything in one opaque response.",
+    icon: Workflow,
+  },
+  {
+    title: "Optional rewrites",
+    description:
+      "Rewrite suggestions are framed as non-authoritative edits, so students keep ownership and reviewers can accept or reject changes.",
+    icon: Sparkles,
+  },
+];
+
+const processSteps = [
+  "Upload a DOCX or text PDF and preserve source anchors.",
+  "Plan the review passes needed for the document and rubric.",
+  "Retrieve evidence, verify citations, and flag uncertainty.",
+  "Generate a report with provenance, confidence, and next actions.",
+];
+
+function SectionHeader({
   title,
   description,
 }: {
@@ -14,107 +66,248 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="glass-card rounded-[2rem] p-6">
-      <h3 className="font-display text-3xl text-[var(--foreground)]">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{description}</p>
+    <div className="marketing-section-header">
+      <h2>{title}</h2>
+      <p>{description}</p>
+    </div>
+  );
+}
+
+function FeatureCard({ title, description, icon: Icon }: Feature) {
+  return (
+    <article className="marketing-feature-card marketing-reveal">
+      <div className="marketing-icon">
+        <Icon aria-hidden="true" size={22} />
+      </div>
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </article>
+  );
+}
+
+function ReviewControlsCard() {
+  const setupItems = [
+    { label: "Evidence policy", value: "Trust-first" },
+    { label: "Source handling", value: "Least retention" },
+    { label: "Reviewer handoff", value: "Traceable" },
+  ];
+
+  return (
+    <aside className="marketing-status-card" aria-label="Review controls">
+      <div>
+        <p className="marketing-status-kicker">Review controls</p>
+        <h3>Built for reviewers who need to know what the system checked.</h3>
+      </div>
+      <div className="marketing-status-list">
+        {setupItems.map((item) => (
+          <div key={item.label} className="marketing-status-row">
+            <span className="marketing-dot-ready" />
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function HeroPreview() {
+  return (
+    <div className="marketing-preview" aria-label="DraftLens report preview">
+      <div className="marketing-preview-topbar">
+        <span />
+        <span />
+        <span />
+        <strong>Review report</strong>
+      </div>
+      <div className="marketing-preview-grid">
+        <div className="marketing-preview-main">
+          <div className="marketing-preview-score">
+            <div>
+              <p>Evidence readiness</p>
+              <strong>78%</strong>
+            </div>
+            <div className="marketing-preview-meter" aria-hidden="true">
+              <span />
+            </div>
+          </div>
+
+          <div className="marketing-claim-card">
+            <div className="marketing-claim-header">
+              <span>Claim 04</span>
+              <strong>Partial support</strong>
+            </div>
+            <p>
+              &quot;Urban tree cover can reduce local heat exposure by
+              double-digit percentages in every neighborhood.&quot;
+            </p>
+            <div className="marketing-evidence-row">
+              <CheckCircle2 aria-hidden="true" size={18} />
+              <span>Source metadata matched, but local scope is not proven.</span>
+            </div>
+          </div>
+
+          <div className="marketing-mini-table">
+            <div>
+              <span>Citation</span>
+              <strong>Verified metadata</strong>
+            </div>
+            <div>
+              <span>Quote check</span>
+              <strong>Needs review</strong>
+            </div>
+            <div>
+              <span>Rewrite</span>
+              <strong>Optional</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="marketing-preview-side">
+          <div>
+            <p>Pipeline</p>
+            <span>queued</span>
+            <span>ingested</span>
+            <span>verified</span>
+            <span>criticized</span>
+          </div>
+          <div>
+            <p>Trace</p>
+            <strong>4 stages</strong>
+            <span>cost and latency recorded</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default async function Home() {
   const user = await getCurrentUser().catch(() => null);
+  const primaryHref = user ? "/dashboard" : flags.isDemoMode ? "/dashboard" : "/sign-up";
+  const primaryLabel = user ? "Open dashboard" : flags.isDemoMode ? "Explore workspace" : "Start free";
 
   return (
-    <div className="page-shell">
+    <div className="marketing-shell page-shell">
       <SiteHeader signedIn={Boolean(user)} />
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-6 pb-16 lg:px-10">
-        <section className="hero-card overflow-hidden rounded-[2.5rem] px-8 py-12 lg:px-12 lg:py-16">
-          <div className="grid gap-10 lg:grid-cols-[1.3fr_0.9fr]">
+      <main>
+        <section className="marketing-hero">
+          <div className="marketing-hero-copy marketing-reveal">
+            <h1>Evidence-grounded document review for drafts that need trust.</h1>
+            <p>
+              {APP_TAGLINE} {APP_NAME} turns uploads into claim-level review
+              reports with citation checks, provenance, uncertainty, and
+              revision guidance that stays honest when evidence is thin.
+            </p>
+            <div className="marketing-hero-actions">
+              <Link className="primary-button" href={primaryHref}>
+                {primaryLabel}
+                <ArrowRight aria-hidden="true" size={18} />
+              </Link>
+              <Link className="secondary-button" href="/dashboard/submissions/demo-report">
+                View sample report
+              </Link>
+            </div>
+          </div>
+
+          <div className="marketing-hero-visual marketing-reveal">
+            <HeroPreview />
+          </div>
+        </section>
+
+        <section className="marketing-proof-strip" aria-label="Product proof points">
+          <span>Auth, uploads, credits preserved</span>
+          <span>Crossref and OpenAlex checks</span>
+          <span>Traceable sample reports</span>
+        </section>
+
+        <TrustOrbitScene />
+
+        <section id="product" className="marketing-section">
+          <SectionHeader
+            title="A review workflow, not a generic essay bot."
+            description="The upgraded surface is built around the same primitives a real reviewer needs: claims, evidence, confidence, traces, and safe revision suggestions."
+          />
+          <div className="marketing-feature-grid">
+            {featureCards.map((feature) => (
+              <FeatureCard key={feature.title} {...feature} />
+            ))}
+          </div>
+        </section>
+
+        <section id="trust" className="marketing-split-section">
+          <div className="marketing-trust-copy marketing-reveal">
+            <ShieldCheck aria-hidden="true" size={32} />
+            <h2>Trust is a product feature, not a footer promise.</h2>
+            <p>
+              DraftLens separates metadata matches from true claim support,
+              highlights uncertainty, treats external sources as untrusted data,
+              and preserves the original MVP&apos;s temporary source-file deletion
+              principle.
+            </p>
+            <div className="marketing-check-list">
+              <span>Fails safely when evidence is weak.</span>
+              <span>Labels rewrites as optional and non-authoritative.</span>
+              <span>Records review stages for inspection and evals.</span>
+            </div>
+          </div>
+          <div className="marketing-metrics-panel marketing-reveal">
             <div>
-              <p className="eyebrow">{APP_NAME}</p>
-              <h1 className="mt-5 max-w-3xl font-display text-5xl leading-tight text-[var(--foreground)] md:text-6xl">
-                Turn a draft into a report students can actually revise from.
-              </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-                {APP_TAGLINE} Upload a paper, get transparent rubric scoring, spot questionable references, and tighten the writing without turning it into obvious AI gloss.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <Link
-                  className="primary-button"
-                  href={user ? "/dashboard" : flags.isDemoMode ? "/dashboard" : "/sign-up"}
-                >
-                  {user
-                    ? "Open dashboard"
-                    : flags.isDemoMode
-                      ? "Try demo workspace"
-                      : "Start free"}
-                </Link>
-                <Link className="secondary-button" href="/pricing">
-                  See pricing path
-                </Link>
-                <Link className="secondary-button" href="/setup">
-                  Setup guide
-                </Link>
-              </div>
+              <strong>5</strong>
+              <span>rubric dimensions</span>
             </div>
-
-            <div className="glass-card rounded-[2rem] p-6">
-              <p className="eyebrow">What the report includes</p>
-              <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--muted)]">
-                <li>Overall essay score plus five rubric subscores.</li>
-                <li>APA and MLA citation format and metadata checks.</li>
-                <li>Highest-priority revision guidance instead of generic fluff.</li>
-                <li>Paragraph-level rewrites that preserve meaning and authorship.</li>
-              </ul>
+            <div>
+              <strong>3</strong>
+              <span>review scenarios</span>
+            </div>
+            <div>
+              <strong>0</strong>
+              <span>fabricated-source tolerance</span>
             </div>
           </div>
         </section>
 
-        <SetupNotice
-          hasSupabase={flags.hasSupabasePublic}
-          hasServiceRole={flags.hasSupabaseService}
-          hasOpenAI={flags.hasOpenAI}
-        />
-
-        <section className="grid gap-5 lg:grid-cols-3">
-          <FeatureCard
-            title="Citation-aware"
-            description="DraftLens does not stop at grammar. It looks for a reference section, detects APA or MLA, and checks likely source existence through academic metadata APIs."
+        <section id="process" className="marketing-section">
+          <SectionHeader
+            title="From upload to provenance in four clear stages."
+            description="The roadmap keeps the product understandable: deterministic parsing first, model-assisted reasoning only where it adds review value."
           />
-          <FeatureCard
-            title="Feedback first"
-            description="The core product is coaching, not detector gaming. Students see strengths, risks, and next edits in a format that feels credible enough for real use."
-          />
-          <FeatureCard
-            title="Resume-worthy build"
-            description="Full-stack auth, uploads, AI analysis, citation verification, saved reports, and a clear business path make this a strong portfolio project and a realistic side-hustle foundation."
-          />
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="glass-card rounded-[2rem] p-6">
-            <p className="eyebrow">How it works</p>
-            <ol className="mt-5 space-y-4 text-sm leading-7 text-[var(--muted)]">
-              <li>Upload a `.docx` or text PDF and DraftLens extracts the essay body, references, and citation signals.</li>
-              <li>The analysis pipeline scores the draft against a general academic rubric and highlights the highest-leverage fixes.</li>
-              <li>Crossref and OpenAlex checks look for likely source matches so weak or missing citations are easier to spot.</li>
-              <li>Students review saved reports, compare rewrite suggestions, and revise with a clearer plan.</li>
-            </ol>
-          </div>
-
-          <div className="glass-card rounded-[2rem] p-6">
-            <p className="eyebrow">Analysis mode</p>
-            <ul className="mt-5 space-y-4 text-sm leading-7 text-[var(--muted)]">
-              <li>
-                {flags.hasOpenAI
-                  ? "This environment can use AI-assisted analysis for richer summaries and rewrites."
-                  : "This environment is currently running in fallback mode to avoid paid AI usage."}
+          <ol className="marketing-process">
+            {processSteps.map((step, index) => (
+              <li key={step} className="marketing-process-step marketing-reveal">
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>{step}</p>
               </li>
-              <li>Supabase powers real auth, uploads, storage cleanup, and saved user history.</li>
-              <li>Citation verification still checks metadata confidence through academic source lookups.</li>
-            </ul>
+            ))}
+          </ol>
+        </section>
+
+        <section className="marketing-demo-band">
+          <div className="marketing-demo-copy">
+            <Layers3 aria-hidden="true" size={28} />
+            <h2>Accountable review infrastructure for serious drafts.</h2>
+            <p>
+              DraftLens makes the review process visible: ingestion, retrieval,
+              verifier and critic passes, trace summaries, and a trust policy
+              that separates evidence from uncertainty.
+            </p>
+          </div>
+          <ReviewControlsCard />
+        </section>
+
+        <section className="marketing-final-cta">
+          <ClipboardCheck aria-hidden="true" size={34} />
+          <h2>Explore a sample trust report.</h2>
+          <p>
+            See unsupported statements, evidence links, citation confidence, and
+            trace information in the same format a reviewer would inspect.
+          </p>
+          <div>
+            <Link className="primary-button" href="/dashboard/submissions/demo-report">
+              Open sample report
+              <ArrowRight aria-hidden="true" size={18} />
+            </Link>
           </div>
         </section>
       </main>

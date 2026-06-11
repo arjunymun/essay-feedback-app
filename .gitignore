@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/.venv
+/services/review-api/.venv
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,6 +14,10 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+__pycache__/
+*.py[cod]
 
 # next.js
 /.next/

@@ -24,7 +24,7 @@ export async function getCurrentUser() {
 
 export async function requireUser() {
   if (!flags.hasSupabasePublic) {
-    return DEMO_USER;
+    redirect("/sign-in");
   }
 
   const user = await getCurrentUser();

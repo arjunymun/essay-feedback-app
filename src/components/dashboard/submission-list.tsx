@@ -13,6 +13,82 @@ type SubmissionListProps = {
   submissions: SubmissionRecord[];
 };
 
+function SubmissionListItem({ submission }: { submission: SubmissionRecord }) {
+  const trustScore = submission.report_json?.trustSummary?.overallTrustScore;
+
+  return (
+    <Link
+      href={`/dashboard/submissions/${submission.id}`}
+      className="glass-card flex flex-col gap-4 rounded-[2rem] p-6 transition hover:-translate-y-0.5"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="font-display text-2xl text-[var(--foreground)]">
+            {submission.title}
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--muted)]">
+            {submission.report_excerpt ?? submission.file_name}
+          </p>
+        </div>
+        <div
+          className={cn(
+            "inline-flex w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]",
+            statusTone[submission.status],
+          )}
+        >
+          {submission.status}
+        </div>
+      </div>
+
+      <div className="grid gap-3 text-sm text-[var(--muted)] md:grid-cols-4">
+        <div>
+          <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+            Score
+          </span>
+          <span className="text-[var(--foreground)]">
+            {submission.overall_score ? `${submission.overall_score}/100` : "Pending"}
+          </span>
+        </div>
+        <div>
+          <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+            Trust
+          </span>
+          <span className="text-[var(--foreground)]">
+            {typeof trustScore === "number" ? `${trustScore}/100` : "Pending"}
+          </span>
+        </div>
+        <div>
+          <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+            Words
+          </span>
+          <span className="text-[var(--foreground)]">{submission.word_count || "-"}</span>
+        </div>
+        <div>
+          <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+            Updated
+          </span>
+          <span className="text-[var(--foreground)]">
+            {formatDateTime(submission.completed_at ?? submission.updated_at)}
+          </span>
+        </div>
+      </div>
+
+      {submission.status === "processing" ? (
+        <div className="rounded-[1.2rem] border border-sky-300/20 bg-sky-300/8 px-4 py-3 text-sm leading-7 text-sky-100">
+          Analysis is still running. Open this item in a moment to see the full
+          score breakdown, trust findings, and citation table.
+        </div>
+      ) : null}
+
+      {submission.status === "failed" && submission.error_message ? (
+        <div className="rounded-[1.2rem] border border-rose-300/20 bg-rose-300/8 px-4 py-3 text-sm leading-7 text-rose-100">
+          {submission.error_message}
+        </div>
+      ) : null}
+    </Link>
+  );
+}
+
 export function SubmissionList({ submissions }: SubmissionListProps) {
   if (!submissions.length) {
     return (
@@ -32,76 +108,7 @@ export function SubmissionList({ submissions }: SubmissionListProps) {
   return (
     <div className="space-y-4">
       {submissions.map((submission) => (
-        <Link
-          key={submission.id}
-          href={`/dashboard/submissions/${submission.id}`}
-          className="glass-card flex flex-col gap-4 rounded-[2rem] p-6 transition hover:-translate-y-0.5"
-        >
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="font-display text-2xl text-[var(--foreground)]">
-                {submission.title}
-              </p>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--muted)]">
-                {submission.report_excerpt ?? submission.file_name}
-              </p>
-            </div>
-            <div
-              className={cn(
-                "inline-flex w-fit rounded-full px-3 py-1 text-xs uppercase tracking-[0.18em]",
-                statusTone[submission.status],
-              )}
-            >
-              {submission.status}
-            </div>
-          </div>
-
-          <div className="grid gap-3 text-sm text-[var(--muted)] md:grid-cols-4">
-            <div>
-              <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
-                Score
-              </span>
-              <span className="text-[var(--foreground)]">
-                {submission.overall_score ? `${submission.overall_score}/100` : "Pending"}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
-                Style
-              </span>
-              <span className="text-[var(--foreground)]">
-                {submission.citation_style.toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
-                Words
-              </span>
-              <span className="text-[var(--foreground)]">{submission.word_count || "-"}</span>
-            </div>
-            <div>
-              <span className="block text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
-                Updated
-              </span>
-              <span className="text-[var(--foreground)]">
-                {formatDateTime(submission.completed_at ?? submission.updated_at)}
-              </span>
-            </div>
-          </div>
-
-          {submission.status === "processing" ? (
-            <div className="rounded-[1.2rem] border border-sky-300/20 bg-sky-300/8 px-4 py-3 text-sm leading-7 text-sky-100">
-              Analysis is still running. Open this item in a moment to see the full score
-              breakdown and citation table.
-            </div>
-          ) : null}
-
-          {submission.status === "failed" && submission.error_message ? (
-            <div className="rounded-[1.2rem] border border-rose-300/20 bg-rose-300/8 px-4 py-3 text-sm leading-7 text-rose-100">
-              {submission.error_message}
-            </div>
-          ) : null}
-        </Link>
+        <SubmissionListItem key={submission.id} submission={submission} />
       ))}
     </div>
   );

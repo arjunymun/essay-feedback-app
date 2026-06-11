@@ -6,6 +6,7 @@ import type {
   CreditLedgerEntry,
   CreditSummary,
   EssayReport,
+  ReviewJobRecord,
   SubmissionRecord,
 } from "@/lib/types";
 import { AppError } from "@/lib/utils";
@@ -82,34 +83,22 @@ export async function getCreditSummary(
   client: SupabaseClient,
   userId: string,
 ): Promise<CreditSummary> {
-  const { data, error } = await client
-    .from("credit_ledger")
-    .select("delta, kind")
-    .eq("user_id", userId);
+  const { data, error } = await client.rpc("get_credit_summary", { p_user_id: userId });
 
   if (error) {
     throw new AppError(error.message, 500);
   }
 
-  const entries = (data ?? []).map((entry) => ({
-    delta: Number(entry.delta ?? 0),
-    kind: String(entry.kind ?? ""),
-  }));
-  const deltas = entries.map((entry) => entry.delta);
-  const totalAwarded = deltas.filter((value) => value > 0).reduce((a, b) => a + b, 0);
-  const totalConsumed = Math.abs(
-    deltas.filter((value) => value < 0).reduce((a, b) => a + b, 0),
-  );
-  const totalPurchased = entries
-    .filter((entry) => entry.kind === "purchase" && entry.delta > 0)
-    .reduce((sum, entry) => sum + entry.delta, 0);
+  const row = (data as { remaining: number; total_awarded: number; total_consumed: number; total_purchased: number }[])[0] ?? {
+    remaining: 0, total_awarded: 0, total_consumed: 0, total_purchased: 0,
+  };
 
   return {
-    remaining: deltas.reduce((a, b) => a + b, 0),
-    totalAwarded,
-    totalConsumed,
-    totalPurchased,
-    totalFreeCredits: totalAwarded - totalPurchased,
+    remaining: Number(row.remaining),
+    totalAwarded: Number(row.total_awarded),
+    totalConsumed: Number(row.total_consumed),
+    totalPurchased: Number(row.total_purchased),
+    totalFreeCredits: Number(row.total_awarded) - Number(row.total_purchased),
   };
 }
 
@@ -119,30 +108,23 @@ export async function reserveCredit(
 ): Promise<CreditLedgerEntry> {
   await ensureSeedCredits(admin, userId);
 
-  const summary = await getCreditSummary(admin, userId);
-  if (summary.remaining <= 0) {
-    throw new AppError(
-      "You have used all available credits. Buy a starter pack to keep analyzing essays.",
-      402,
-    );
-  }
-
-  const { data, error } = await admin
-    .from("credit_ledger")
-    .insert({
-      user_id: userId,
-      delta: -1,
-      kind: "reserved",
-      note: "Reserved for essay analysis",
-    })
-    .select("*")
-    .single();
+  // reserve_credit RPC performs the balance check and the insert atomically
+  // inside a single transaction with a per-user advisory lock, preventing
+  // two concurrent requests from both passing the balance check.
+  const { data, error } = await admin.rpc("reserve_credit", { p_user_id: userId });
 
   if (error) {
+    if (error.message.includes("INSUFFICIENT_CREDITS")) {
+      throw new AppError(
+        "You have used all available credits. Buy a starter pack to keep analyzing essays.",
+        402,
+      );
+    }
     throw new AppError(error.message, 500);
   }
 
-  return data as CreditLedgerEntry;
+  const entries = data as CreditLedgerEntry[];
+  return entries[0];
 }
 
 export async function createSubmissionRecord(
@@ -171,6 +153,77 @@ export async function createSubmissionRecord(
   }
 
   return asSubmissionRecord(data);
+}
+
+function asReviewJobRecord(row: unknown) {
+  return row as ReviewJobRecord;
+}
+
+export async function createReviewJob(
+  admin: SupabaseClient,
+  values: {
+    userId: string;
+    submissionId: string;
+    status?: ReviewJobRecord["status"];
+  },
+) {
+  const { data, error } = await admin
+    .from("review_jobs")
+    .insert({
+      user_id: values.userId,
+      submission_id: values.submissionId,
+      status: values.status ?? "queued",
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new AppError(error.message, 500);
+  }
+
+  return asReviewJobRecord(data);
+}
+
+export async function updateReviewJobStatus(
+  admin: SupabaseClient,
+  reviewJobId: string,
+  values: {
+    status: ReviewJobRecord["status"];
+    errorMessage?: string | null;
+    traceId?: string | null;
+    startedAt?: string | null;
+    completedAt?: string | null;
+  },
+) {
+  const payload: Record<string, string | null | number> = {
+    status: values.status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if ("errorMessage" in values) {
+    payload.error_message = values.errorMessage ?? null;
+  }
+
+  if ("traceId" in values) {
+    payload.trace_id = values.traceId ?? null;
+  }
+
+  if ("startedAt" in values) {
+    payload.started_at = values.startedAt ?? null;
+  }
+
+  if ("completedAt" in values) {
+    payload.completed_at = values.completedAt ?? null;
+  }
+
+  const { error } = await admin
+    .from("review_jobs")
+    .update(payload)
+    .eq("id", reviewJobId);
+
+  if (error) {
+    throw new AppError(error.message, 500);
+  }
 }
 
 export async function setSubmissionStoragePath(
@@ -256,20 +309,25 @@ export async function fulfillCreditPurchase(
     };
   }
 
-  const purchasePayload = {
+  // Mark fulfilled_at in the same write as the purchase row so that if the
+  // process crashes after the ledger insert, a Stripe webhook retry sees
+  // fulfilled_at already set and skips re-crediting.
+  const fulfilledPayload = {
     user_id: values.userId,
     stripe_checkout_session_id: values.stripeCheckoutSessionId,
     stripe_payment_intent_id: values.stripePaymentIntentId ?? null,
     pack_key: values.packKey,
     credits_awarded: values.creditsAwarded,
-    payment_status: values.paymentStatus,
+    payment_status: "fulfilled",
+    fulfilled_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 
   const purchase = existing
     ? await (async () => {
         const { data, error } = await admin
           .from("credit_purchases")
-          .update(purchasePayload)
+          .update(fulfilledPayload)
           .eq("id", existing.id)
           .select("*")
           .single();
@@ -283,7 +341,7 @@ export async function fulfillCreditPurchase(
     : await (async () => {
         const { data, error } = await admin
           .from("credit_purchases")
-          .insert(purchasePayload)
+          .insert(fulfilledPayload)
           .select("*")
           .single();
 
@@ -305,24 +363,9 @@ export async function fulfillCreditPurchase(
     throw new AppError(ledgerError.message, 500);
   }
 
-  const { data: fulfilledPurchase, error: fulfilledError } = await admin
-    .from("credit_purchases")
-    .update({
-      payment_status: "fulfilled",
-      fulfilled_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", purchase.id)
-    .select("*")
-    .single();
-
-  if (fulfilledError) {
-    throw new AppError(fulfilledError.message, 500);
-  }
-
   return {
     alreadyFulfilled: false,
-    purchase: asCreditPurchaseRecord(fulfilledPurchase),
+    purchase,
   };
 }
 

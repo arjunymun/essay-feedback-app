@@ -6,7 +6,7 @@ import { getSubmissionForUser } from "@/lib/data";
 import { getDemoSubmissionById } from "@/lib/demo";
 import { flags } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CitationVerificationResult, RubricScore } from "@/lib/types";
+import type { ClaimFinding, CitationVerificationResult, RubricScore } from "@/lib/types";
 import { cn, formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -107,6 +107,41 @@ function CitationStatusChip({
   return (
     <span className={cn("rounded-full px-3 py-1 text-xs uppercase tracking-[0.16em]", tone)}>
       {status.replace("_", " ")}
+    </span>
+  );
+}
+
+function ClaimVerdictChip({ verdict }: { verdict: ClaimFinding["verdict"] }) {
+  const tone = {
+    supported: "bg-emerald-400/15 text-emerald-100",
+    partially_supported: "bg-amber-400/15 text-amber-100",
+    unsupported: "bg-rose-400/15 text-rose-100",
+    uncertain: "bg-sky-400/15 text-sky-100",
+    not_applicable: "bg-slate-400/15 text-slate-100",
+  }[verdict];
+
+  return (
+    <span className={cn("rounded-full px-3 py-1 text-xs uppercase tracking-[0.16em]", tone)}>
+      {verdict.replaceAll("_", " ")}
+    </span>
+  );
+}
+
+function RiskPill({ risk }: { risk: ClaimFinding["riskLevel"] }) {
+  const tone = {
+    low: "border-emerald-300/20 text-emerald-100",
+    medium: "border-amber-300/25 text-amber-100",
+    high: "border-rose-300/25 text-rose-100",
+  }[risk];
+
+  return (
+    <span
+      className={cn(
+        "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.16em]",
+        tone,
+      )}
+    >
+      {risk} risk
     </span>
   );
 }
@@ -243,11 +278,183 @@ export default async function SubmissionDetailPage({
               />
             </section>
 
+            {report.trustSummary ? (
+              <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="glass-card rounded-[2rem] p-6">
+                  <p className="eyebrow">Trust layer</p>
+                  <div className="mt-5 flex items-end justify-between gap-5">
+                    <div>
+                      <p className="font-display text-6xl leading-none text-[var(--foreground)]">
+                        {report.trustSummary.overallTrustScore}
+                      </p>
+                      <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">
+                        trust score
+                      </p>
+                    </div>
+                    <p className="max-w-xs text-right text-sm leading-7 text-[var(--muted)]">
+                      Confidence reflects available evidence, not guaranteed truth.
+                    </p>
+                  </div>
+                  <div className="mt-5 report-score-bar">
+                    <span style={{ width: `${report.trustSummary.overallTrustScore}%` }} />
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <InfoPill
+                      label="Supported"
+                      value={String(report.trustSummary.supportedClaims)}
+                    />
+                    <InfoPill
+                      label="Partial"
+                      value={String(report.trustSummary.partiallySupportedClaims)}
+                    />
+                    <InfoPill
+                      label="Unsupported"
+                      value={String(report.trustSummary.unsupportedClaims)}
+                    />
+                    <InfoPill
+                      label="Uncertain"
+                      value={String(report.trustSummary.uncertainClaims)}
+                    />
+                  </div>
+                </div>
+
+                <div className="glass-card rounded-[2rem] p-6">
+                  <p className="eyebrow">Safe-failure policy</p>
+                  <p className="mt-4 text-base leading-8 text-[var(--foreground)]">
+                    {report.trustSummary.uncertaintyPolicy}
+                  </p>
+                  <div className="mt-5 space-y-3">
+                    {report.trustSummary.safeFailureNotes.map((note) => (
+                      <div
+                        key={note}
+                        className="rounded-[1.2rem] border border-amber-300/20 bg-amber-300/8 px-4 py-3 text-sm leading-7 text-amber-100"
+                      >
+                        {note}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
             <section className="grid gap-4 lg:grid-cols-5">
               {report.rubric.map((score) => (
                 <RubricCard key={score.key} score={score} />
               ))}
             </section>
+
+            {report.claimFindings?.length ? (
+              <section className="glass-card rounded-[2rem] p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="space-y-2">
+                    <p className="eyebrow">Claim-level review</p>
+                    <h2 className="font-display text-3xl text-[var(--foreground)]">
+                      Evidence and uncertainty findings
+                    </h2>
+                  </div>
+                  <p className="max-w-xl text-sm leading-7 text-[var(--muted)]">
+                    DraftLens separates source existence from claim support. Unsupported
+                    statements are prompts for revision, not verdicts about the author.
+                  </p>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  {report.claimFindings.map((finding) => (
+                    <article key={finding.id} className="trust-claim-card">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap gap-2">
+                            <ClaimVerdictChip verdict={finding.verdict} />
+                            <RiskPill risk={finding.riskLevel} />
+                            {finding.needsEvidence ? (
+                              <span className="rounded-full border border-sky-300/20 px-3 py-1 text-xs uppercase tracking-[0.16em] text-sky-100">
+                                evidence required
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="text-base leading-8 text-[var(--foreground)]">
+                            {finding.claim}
+                          </p>
+                        </div>
+                        <div className="min-w-28 text-left lg:text-right">
+                          <p className="font-display text-3xl text-[var(--foreground)]">
+                            {finding.confidence}
+                          </p>
+                          <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted-soft)]">
+                            confidence
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                        <div className="rounded-[1.2rem] border border-[var(--border)] p-4">
+                          <p className="text-xs uppercase tracking-[0.16em] text-[var(--muted-soft)]">
+                            Uncertainty
+                          </p>
+                          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+                            {finding.uncertainty}
+                          </p>
+                          <p className="mt-3 text-xs uppercase tracking-[0.16em] text-[var(--muted-soft)]">
+                            Page {finding.sourceSpan.page ?? "-"} / Paragraph{" "}
+                            {finding.sourceSpan.paragraph ?? "-"}
+                          </p>
+                        </div>
+
+                        <div className="space-y-3">
+                          {finding.evidence.length ? (
+                            finding.evidence.map((evidence) => (
+                              <div
+                                key={`${finding.id}-${evidence.title}-${evidence.notes}`}
+                                className="rounded-[1.2rem] border border-[var(--border)] p-4"
+                              >
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <p className="text-sm font-medium text-[var(--foreground)]">
+                                    {evidence.title}
+                                  </p>
+                                  <span className="rounded-full bg-white/6 px-3 py-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
+                                    {evidence.sourceType.replaceAll("_", " ")}
+                                  </span>
+                                </div>
+                                {evidence.quote ? (
+                                  <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                                    &ldquo;{evidence.quote}&rdquo;
+                                  </p>
+                                ) : null}
+                                <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                                  {evidence.notes}
+                                  {evidence.url ? (
+                                    <>
+                                      {" "}
+                                      <a
+                                        className="text-[var(--accent-strong)]"
+                                        href={evidence.url}
+                                        rel="noreferrer"
+                                        target="_blank"
+                                      >
+                                        View source
+                                      </a>
+                                    </>
+                                  ) : null}
+                                </p>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="rounded-[1.2rem] border border-rose-300/20 bg-rose-300/8 p-4 text-sm leading-7 text-rose-100">
+                              No evidence candidate was strong enough to attach.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 rounded-[1.2rem] border border-[var(--border)] bg-black/10 px-4 py-3 text-sm leading-7 text-[var(--foreground)]">
+                        {finding.recommendation}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-6">
@@ -405,6 +612,69 @@ export default async function SubmissionDetailPage({
               initialSuggestions={report.rewriteSuggestions}
               submissionId={submission.id}
             />
+
+            {report.reviewTrace ? (
+              <section className="glass-card rounded-[2rem] p-6">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="eyebrow">Review trace</p>
+                    <h2 className="mt-2 font-display text-3xl text-[var(--foreground)]">
+                      What happened during this review
+                    </h2>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
+                    <span className="rounded-full border border-[var(--border)] px-3 py-1">
+                      {report.reviewTrace.status}
+                    </span>
+                    <span className="rounded-full border border-[var(--border)] px-3 py-1">
+                      {report.reviewTrace.totalLatencyMs ?? 0} ms
+                    </span>
+                    <span className="rounded-full border border-[var(--border)] px-3 py-1">
+                      ${report.reviewTrace.estimatedCostUsd?.toFixed(2) ?? "0.00"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {report.reviewTrace.passes.map((pass) => (
+                    <span
+                      key={pass}
+                      className="rounded-full bg-white/6 px-3 py-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]"
+                    >
+                      {pass.replaceAll("_", " ")}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-5 grid gap-3 lg:grid-cols-2">
+                  {report.reviewTrace.steps.map((step) => (
+                    <div
+                      key={`${step.name}-${step.status}`}
+                      className="rounded-[1.2rem] border border-[var(--border)] p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-[var(--foreground)]">
+                            {step.name.replaceAll("_", " ")}
+                          </p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--muted-soft)]">
+                            {step.model ?? "deterministic"}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-white/6 px-3 py-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
+                          {step.status}
+                        </span>
+                      </div>
+                      {step.notes ? (
+                        <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                          {step.notes}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </>
         ) : (
           <section className="glass-card rounded-[2rem] p-6">

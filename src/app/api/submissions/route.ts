@@ -5,20 +5,35 @@ import { extractEssayFromBuffer } from "@/lib/analysis/parsing";
 import { ESSAY_UPLOAD_BUCKET } from "@/lib/constants";
 import {
   consumeReservedCredit,
+  createReviewJob,
   createSubmissionRecord,
   finalizeSubmission,
   markSubmissionFailed,
   releaseReservedCredit,
   reserveCredit,
   setSubmissionStoragePath,
+  updateReviewJobStatus,
 } from "@/lib/data";
 import { flags } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { UploadMetadata } from "@/lib/types";
+import { generateTrustReportWithReviewService } from "@/lib/review-service";
+import { persistTrustReviewArtifacts } from "@/lib/trust-persistence";
 import { AppError, slugify } from "@/lib/utils";
 
 export const runtime = "nodejs";
+
+function isMissingTrustSchemaError(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  return (
+    message.includes("review_jobs") ||
+    message.includes("documents") ||
+    message.includes("review_reports") ||
+    message.includes("relation") ||
+    message.includes("could not find the table")
+  );
+}
 
 export async function POST(request: Request) {
   if (!flags.hasSupabasePublic || !flags.hasSupabaseService) {
@@ -57,6 +72,7 @@ export async function POST(request: Request) {
 
   let reservationId: string | null = null;
   let submissionId: string | null = null;
+  let reviewJobId: string | null = null;
   let storagePath: string | null = null;
 
   try {
@@ -73,6 +89,21 @@ export async function POST(request: Request) {
 
     submissionId = submission.id;
 
+    if (flags.hasReviewService) {
+      try {
+        const reviewJob = await createReviewJob(admin, {
+          userId: user.id,
+          submissionId: submission.id,
+          status: "queued",
+        });
+        reviewJobId = reviewJob.id;
+      } catch (error) {
+        if (!isMissingTrustSchemaError(error)) {
+          throw error;
+        }
+      }
+    }
+
     storagePath = `${user.id}/${submission.id}/${Date.now()}-${slugify(metadata.name)}`;
 
     const { error: uploadError } = await admin.storage
@@ -88,8 +119,57 @@ export async function POST(request: Request) {
 
     await setSubmissionStoragePath(admin, submission.id, storagePath);
 
+    if (reviewJobId) {
+      await updateReviewJobStatus(admin, reviewJobId, {
+        status: "ingesting",
+        startedAt: new Date().toISOString(),
+      });
+    }
+
     const extraction = await extractEssayFromBuffer(buffer, metadata);
-    const report = await generateEssayReport(extraction);
+
+    if (reviewJobId) {
+      await updateReviewJobStatus(admin, reviewJobId, { status: "planning" });
+    }
+
+    if (reviewJobId) {
+      await updateReviewJobStatus(admin, reviewJobId, { status: "retrieving" });
+    }
+
+    const trustReport = await generateTrustReportWithReviewService(
+      submission.id,
+      user.id,
+      extraction,
+    ).catch(async (error) => {
+        if (reviewJobId) {
+          await updateReviewJobStatus(admin, reviewJobId, {
+            status: "failed",
+            errorMessage:
+              error instanceof Error
+                ? error.message
+                : "The trust review service failed.",
+            completedAt: new Date().toISOString(),
+          }).catch(() => undefined);
+        }
+        return null;
+      });
+    const report = trustReport ?? (await generateEssayReport(extraction));
+
+    if (reviewJobId && report.trustSummary) {
+      await updateReviewJobStatus(admin, reviewJobId, { status: "synthesizing" });
+      await updateReviewJobStatus(admin, reviewJobId, { status: "criticizing" });
+      await persistTrustReviewArtifacts(admin, {
+        userId: user.id,
+        submissionId: submission.id,
+        reviewJobId,
+        extraction,
+        report,
+      }).catch((error) => {
+        if (!isMissingTrustSchemaError(error)) {
+          throw error;
+        }
+      });
+    }
 
     if (storagePath) {
       await admin.storage.from(ESSAY_UPLOAD_BUCKET).remove([storagePath]);
@@ -101,6 +181,15 @@ export async function POST(request: Request) {
       citationStyle: extraction.citationStyle,
       reportExcerpt: extraction.excerpt,
     });
+
+    if (reviewJobId) {
+      await updateReviewJobStatus(admin, reviewJobId, {
+        status: "completed",
+        traceId: report.reviewTrace?.traceId ?? null,
+        completedAt: new Date().toISOString(),
+      });
+    }
+
     await consumeReservedCredit(admin, reservation.id, submission.id);
 
     return NextResponse.json({
@@ -122,6 +211,14 @@ export async function POST(request: Request) {
 
     if (submissionId) {
       await markSubmissionFailed(admin, submissionId, message).catch(() => undefined);
+    }
+
+    if (reviewJobId) {
+      await updateReviewJobStatus(admin, reviewJobId, {
+        status: "failed",
+        errorMessage: message,
+        completedAt: new Date().toISOString(),
+      }).catch(() => undefined);
     }
 
     if (reservationId) {

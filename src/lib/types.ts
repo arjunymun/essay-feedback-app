@@ -8,6 +8,23 @@ export type CitationVerificationStatus =
   | "not_found"
   | "malformed";
 export type SubmissionStatus = "processing" | "completed" | "failed";
+export type ReviewJobStatus =
+  | "queued"
+  | "ingesting"
+  | "planning"
+  | "retrieving"
+  | "verifying"
+  | "synthesizing"
+  | "criticizing"
+  | "completed"
+  | "failed";
+export type ClaimVerdict =
+  | "supported"
+  | "partially_supported"
+  | "unsupported"
+  | "uncertain"
+  | "not_applicable";
+export type TrustRiskLevel = "low" | "medium" | "high";
 export type CreditLedgerKind =
   | "seed"
   | "reserved"
@@ -53,6 +70,63 @@ export interface RewriteSuggestion {
   rationale: string;
 }
 
+export interface TrustSourceSpan {
+  page?: number | null;
+  paragraph?: number | null;
+  startOffset?: number | null;
+  endOffset?: number | null;
+}
+
+export interface ClaimEvidence {
+  title: string;
+  sourceType: "document_chunk" | "crossref" | "openalex" | "user_reference" | "none";
+  confidence: number;
+  quote?: string | null;
+  url?: string | null;
+  notes: string;
+}
+
+export interface ClaimFinding {
+  id: string;
+  claim: string;
+  verdict: ClaimVerdict;
+  confidence: number;
+  riskLevel: TrustRiskLevel;
+  needsEvidence: boolean;
+  uncertainty: string;
+  sourceSpan: TrustSourceSpan;
+  evidence: ClaimEvidence[];
+  recommendation: string;
+}
+
+export interface TrustSummary {
+  overallTrustScore: number;
+  supportedClaims: number;
+  partiallySupportedClaims: number;
+  unsupportedClaims: number;
+  uncertainClaims: number;
+  safeFailureNotes: string[];
+  uncertaintyPolicy: string;
+}
+
+export interface ReviewTraceStep {
+  name: string;
+  status: "completed" | "failed" | "skipped";
+  latencyMs?: number | null;
+  model?: string | null;
+  notes?: string | null;
+}
+
+export interface ReviewTraceSummary {
+  workflowName: string;
+  status: "completed" | "failed" | "fallback";
+  traceId?: string | null;
+  passes: string[];
+  totalLatencyMs?: number | null;
+  estimatedCostUsd?: number | null;
+  steps: ReviewTraceStep[];
+}
+
 export interface EssayReport {
   summary: string;
   overallScore: number;
@@ -62,6 +136,9 @@ export interface EssayReport {
   highestPriorityFixes: string[];
   rewriteSuggestions: RewriteSuggestion[];
   citationVerification: CitationVerificationResult[];
+  trustSummary?: TrustSummary;
+  claimFindings?: ClaimFinding[];
+  reviewTrace?: ReviewTraceSummary;
 }
 
 export interface SubmissionRecord {
@@ -112,6 +189,20 @@ export interface CreditPurchaseRecord {
   credits_awarded: number;
   payment_status: CreditPurchaseStatus;
   fulfilled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewJobRecord {
+  id: string;
+  user_id: string;
+  submission_id: string;
+  status: ReviewJobStatus;
+  attempts: number;
+  error_message: string | null;
+  trace_id: string | null;
+  started_at: string | null;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
 }

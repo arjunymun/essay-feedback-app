@@ -36,10 +36,11 @@ export default async function DashboardPage() {
           <div>
             <p className="eyebrow">Dashboard</p>
             <h1 className="mt-4 font-display text-5xl text-[var(--foreground)]">
-              Welcome back
+              Review workspace
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--muted)]">
-              Upload one document at a time, review the rubric, and keep the strongest edits for your next revision cycle.
+              Upload one document at a time, inspect evidence and uncertainty, and keep
+              revision guidance tied to the claims DraftLens could actually verify.
             </p>
           </div>
 
@@ -81,9 +82,9 @@ export default async function DashboardPage() {
           <div className="glass-card rounded-[2rem] p-6">
             <p className="eyebrow">How scoring works</p>
             <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-              DraftLens combines rubric logic, citation checks, and writing-pattern
-              signals to estimate how strong the draft is across thesis, structure,
-              evidence, style, and citation quality.
+              DraftLens combines rubric logic with a trust-first pipeline: extraction,
+              claim labeling, citation/source checks, synthesis, and a critic pass that
+              keeps uncertainty visible.
             </p>
           </div>
 
@@ -97,11 +98,13 @@ export default async function DashboardPage() {
           </div>
 
           <div className="glass-card rounded-[2rem] p-6">
-            <p className="eyebrow">Current analysis mode</p>
+            <p className="eyebrow">Current review mode</p>
             <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-              {flags.hasOpenAI
-                ? "AI-assisted analysis is available in this environment, so reports can include richer summaries and rewrite quality."
-                : "Fallback analysis mode is active in this environment, so the app still works without paid AI calls but uses simpler report generation."}
+              {flags.hasReviewService
+                ? "Service-backed review is enabled, so uploads can run through the FastAPI trust pipeline and persist provenance artifacts."
+                : flags.hasOpenAI
+                  ? "AI-assisted analysis is available, but the FastAPI trust service is not enabled for this process."
+                  : "Fallback analysis mode is active, so the app remains demoable without paid AI calls."}
             </p>
           </div>
         </section>

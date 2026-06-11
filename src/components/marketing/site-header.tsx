@@ -1,4 +1,8 @@
+"use client";
+
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { APP_NAME } from "@/lib/constants";
 
@@ -7,34 +11,63 @@ type SiteHeaderProps = {
 };
 
 export function SiteHeader({ signedIn = false }: SiteHeaderProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const authHref = signedIn ? "/dashboard" : "/sign-in";
+  const authLabel = signedIn ? "Dashboard" : "Sign in";
+  const navItems = [
+    { href: "#product", label: "Product" },
+    { href: "#trust", label: "Trust" },
+    { href: "#process", label: "Process" },
+    { href: "/pricing", label: "Pricing" },
+  ];
+
   return (
-    <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 lg:px-10">
-      <Link href="/" className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-semibold text-[var(--surface)]">
+    <header className="marketing-header">
+      <Link href="/" className="marketing-brand" aria-label={`${APP_NAME} home`}>
+        <div className="marketing-brand-mark">
           DL
         </div>
         <div>
-          <div className="font-display text-lg text-[var(--foreground)]">{APP_NAME}</div>
-          <div className="text-xs uppercase tracking-[0.24em] text-[var(--muted)]">
-            Writing feedback studio
+          <div className="marketing-brand-name">{APP_NAME}</div>
+          <div className="marketing-brand-tagline">
+            Trust-first review
           </div>
         </div>
       </Link>
 
-      <nav className="flex items-center gap-3 text-sm">
-        <Link href="/setup" className="rounded-full px-4 py-2 text-[var(--muted)] transition hover:text-[var(--foreground)]">
-          Setup
-        </Link>
-        <Link href="/pricing" className="rounded-full px-4 py-2 text-[var(--muted)] transition hover:text-[var(--foreground)]">
-          Pricing
-        </Link>
-        <Link
-          href={signedIn ? "/dashboard" : "/sign-in"}
-          className="rounded-full border border-[var(--border-strong)] px-4 py-2 text-[var(--foreground)] transition hover:-translate-y-0.5"
-        >
-          {signedIn ? "Dashboard" : "Sign in"}
+      <nav className="marketing-nav" aria-label="Primary navigation">
+        {navItems.map((item) => (
+          <Link key={item.href} href={item.href} className="marketing-nav-link">
+            {item.label}
+          </Link>
+        ))}
+        <Link href={authHref} className="marketing-nav-cta">
+          {authLabel}
         </Link>
       </nav>
+
+      <button
+        type="button"
+        className="marketing-menu-button"
+        aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen((open) => !open)}
+      >
+        {mobileOpen ? <X aria-hidden="true" size={20} /> : <Menu aria-hidden="true" size={20} />}
+      </button>
+
+      {mobileOpen ? (
+        <div className="marketing-mobile-menu">
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} className="marketing-mobile-link" onClick={() => setMobileOpen(false)}>
+              {item.label}
+            </Link>
+          ))}
+          <Link href={authHref} className="marketing-mobile-cta" onClick={() => setMobileOpen(false)}>
+            {authLabel}
+          </Link>
+        </div>
+      ) : null}
     </header>
   );
 }

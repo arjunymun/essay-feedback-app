@@ -6,6 +6,7 @@ import { MAX_REWRITE_CHARS } from "@/lib/constants";
 import { getSubmissionForUser } from "@/lib/data";
 import { getDemoSubmissionById } from "@/lib/demo";
 import { flags } from "@/lib/env";
+import { rewriteWithReviewService } from "@/lib/review-service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const rewriteInputSchema = z.object({
@@ -33,6 +34,7 @@ export async function POST(
     }
 
     const rewrite =
+      (await rewriteWithReviewService(parsed.data.excerpt).catch(() => null)) ??
       (await rewriteExcerptWithOpenAI(parsed.data.excerpt).catch(() => null)) ??
       buildFallbackRewrite(parsed.data.excerpt).improvedVersion;
 
@@ -54,6 +56,7 @@ export async function POST(
   }
 
   const rewrite =
+    (await rewriteWithReviewService(parsed.data.excerpt).catch(() => null)) ??
     (await rewriteExcerptWithOpenAI(parsed.data.excerpt).catch(() => null)) ??
     buildFallbackRewrite(parsed.data.excerpt).improvedVersion;
 

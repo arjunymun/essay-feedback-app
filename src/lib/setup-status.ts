@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 export type RuntimeSetupStatus = {
   schemaReady: boolean;
   billingReady: boolean;
+  trustSchemaReady: boolean;
   bucketReady: boolean;
   message: string | null;
 };
@@ -17,24 +18,35 @@ export async function getRuntimeSetupStatus(): Promise<RuntimeSetupStatus | null
   try {
     const admin = createSupabaseAdminClient();
 
-    const tableChecks = await Promise.all([
+    const coreChecks = await Promise.all([
       admin.from("submissions").select("id", { head: true, count: "exact" }).limit(1),
       admin.from("credit_ledger").select("id", { head: true, count: "exact" }).limit(1),
-      admin.from("credit_purchases").select("id", { head: true, count: "exact" }).limit(1),
+    ]);
+    const billingCheck = await admin
+      .from("credit_purchases")
+      .select("id", { head: true, count: "exact" })
+      .limit(1);
+    const trustChecks = await Promise.all([
+      admin.from("review_jobs").select("id", { head: true, count: "exact" }).limit(1),
+      admin.from("documents").select("id", { head: true, count: "exact" }).limit(1),
+      admin.from("claims").select("id", { head: true, count: "exact" }).limit(1),
+      admin.from("review_reports").select("id", { head: true, count: "exact" }).limit(1),
     ]);
 
-    const schemaError = tableChecks.find((result) => result.error)?.error;
+    const schemaError = coreChecks.find((result) => result.error)?.error;
     if (schemaError) {
-      const isBillingTableMissing = schemaError.message.includes("credit_purchases");
       return {
         schemaReady: false,
         billingReady: false,
+        trustSchemaReady: false,
         bucketReady: false,
-        message: isBillingTableMissing
-          ? "Supabase connected, but the billing tables are missing. Run the SQL in supabase/migrations/20260331_v15_billing.sql inside the SQL Editor for this project."
-          : "Supabase connected, but the DraftLens tables are missing. Run the SQL in supabase/migrations/20260331_init.sql inside the SQL Editor for this project.",
+        message:
+          "Supabase connected, but the core DraftLens tables are missing. Run the SQL in supabase/migrations/20260331_init.sql inside the SQL Editor for this project.",
       };
     }
+
+    const billingReady = !billingCheck.error;
+    const trustSchemaReady = !trustChecks.some((result) => result.error);
 
     const { data: bucket, error: bucketError } = await admin.storage.getBucket(
       ESSAY_UPLOAD_BUCKET,
@@ -42,16 +54,22 @@ export async function getRuntimeSetupStatus(): Promise<RuntimeSetupStatus | null
 
     return {
       schemaReady: true,
-      billingReady: true,
+      billingReady,
+      trustSchemaReady,
       bucketReady: Boolean(bucket) && !bucketError,
       message: bucketError
         ? `Database tables are ready, but the ${ESSAY_UPLOAD_BUCKET} storage bucket is still missing. Run the migration to create it.`
-        : "Supabase keys and DraftLens database objects are connected, including the billing tables.",
+        : trustSchemaReady
+          ? "Supabase keys and DraftLens trust-platform database objects are connected."
+          : billingReady
+            ? "Core DraftLens and billing tables are connected. The trust-platform migration still needs to be applied for provenance tables."
+            : "Core DraftLens tables are connected. Billing and trust-platform migrations still need to be applied.",
     };
   } catch (error) {
     return {
       schemaReady: false,
       billingReady: false,
+      trustSchemaReady: false,
       bucketReady: false,
       message:
         error instanceof Error

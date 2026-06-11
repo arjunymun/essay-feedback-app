@@ -113,6 +113,155 @@ export const DEMO_REPORT: EssayReport = {
       notes: "Likely match, but the journal metadata needs a manual spot-check.",
     },
   ],
+  trustSummary: {
+    overallTrustScore: 72,
+    supportedClaims: 1,
+    partiallySupportedClaims: 2,
+    unsupportedClaims: 1,
+    uncertainClaims: 1,
+    safeFailureNotes: [
+      "One cost-related claim needs a source that directly supports the trend.",
+      "Citation metadata is visible, but metadata matches are not treated as proof of claim support.",
+    ],
+    uncertaintyPolicy:
+      "DraftLens reports weak or missing evidence instead of inventing support.",
+  },
+  claimFindings: [
+    {
+      id: "demo_claim_1",
+      claim:
+        "Cities should begin adaptation planning earlier because delayed planning creates higher long-term costs.",
+      verdict: "partially_supported",
+      confidence: 66,
+      riskLevel: "medium",
+      needsEvidence: true,
+      uncertainty:
+        "The draft has policy context and a relevant source trail, but the cited evidence does not directly prove the cost claim.",
+      sourceSpan: {
+        page: 1,
+        paragraph: 3,
+        startOffset: 212,
+        endOffset: 338,
+      },
+      evidence: [
+        {
+          title: "Public trust after flooding events",
+          sourceType: "openalex",
+          confidence: 67,
+          url: "https://openalex.org/W0000000000",
+          notes:
+            "Plausible source metadata, but a reviewer should confirm whether it supports the specific cost claim.",
+        },
+      ],
+      recommendation:
+        "Add a source that directly compares early adaptation planning with delayed response costs.",
+    },
+    {
+      id: "demo_claim_2",
+      claim:
+        "The paper's conclusion gives the recommendation a clear sense of civic purpose.",
+      verdict: "not_applicable",
+      confidence: 78,
+      riskLevel: "low",
+      needsEvidence: false,
+      uncertainty:
+        "This is a writing-quality observation rather than a source-dependent factual claim.",
+      sourceSpan: {
+        page: 2,
+        paragraph: 7,
+        startOffset: 820,
+        endOffset: 906,
+      },
+      evidence: [
+        {
+          title: "Document paragraph 7",
+          sourceType: "document_chunk",
+          confidence: 78,
+          quote:
+            "The conclusion gives the paper a clear sense of purpose and payoff.",
+          notes: "Local document context supports this feedback point.",
+        },
+      ],
+      recommendation:
+        "Keep this ending, but connect it back to the thesis in one direct sentence.",
+    },
+    {
+      id: "demo_claim_3",
+      claim:
+        "Municipal systems are not fully prepared for climate pressure on coastal infrastructure.",
+      verdict: "unsupported",
+      confidence: 32,
+      riskLevel: "high",
+      needsEvidence: true,
+      uncertainty:
+        "DraftLens found not enough support in the visible source trail to verify this broad preparedness claim.",
+      sourceSpan: {
+        page: 1,
+        paragraph: 2,
+        startOffset: 92,
+        endOffset: 194,
+      },
+      evidence: [
+        {
+          title: "Document paragraph 2",
+          sourceType: "document_chunk",
+          confidence: 45,
+          quote:
+            "Because climate pressure on coastal infrastructure is increasing...",
+          notes:
+            "The document repeats the claim, but repetition is not independent evidence.",
+        },
+      ],
+      recommendation:
+        "Either add a credible source about municipal readiness or narrow the claim to the city/context actually discussed.",
+    },
+  ],
+  reviewTrace: {
+    workflowName: "trust_first_review",
+    status: "completed",
+    traceId: "demo-trace-trust-first",
+    passes: [
+      "ingestion",
+      "planning",
+      "claim_extraction",
+      "retrieval",
+      "verification",
+      "synthesis",
+      "critic",
+    ],
+    totalLatencyMs: 1420,
+    estimatedCostUsd: 0.04,
+    steps: [
+      {
+        name: "ingestion",
+        status: "completed",
+        latencyMs: 120,
+        model: "deterministic",
+        notes: "Parsed paragraphs and retained page/paragraph anchors.",
+      },
+      {
+        name: "claim_extraction",
+        status: "completed",
+        latencyMs: 310,
+        model: "gpt-fast-ready",
+        notes: "Selected source-dependent claims for verification.",
+      },
+      {
+        name: "verification",
+        status: "completed",
+        latencyMs: 690,
+        model: "deterministic + Crossref/OpenAlex",
+        notes: "Separated citation metadata from claim support.",
+      },
+      {
+        name: "critic",
+        status: "completed",
+        latencyMs: 180,
+        model: "trust_policy",
+        notes: "Checked that uncertainty was not overstated as fact.",
+      },
+    ],
+  },
 };
 
 export const DEMO_SUBMISSION: SubmissionRecord = {

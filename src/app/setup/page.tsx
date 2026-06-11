@@ -122,6 +122,11 @@ export default async function SetupPage() {
                 detail="Checks whether the credit_purchases table exists for Stripe purchase fulfillment."
               />
               <SetupItem
+                label="Trust platform tables"
+                ready={runtimeStatus.trustSchemaReady}
+                detail="Checks whether review jobs, documents, claims, and trust reports are ready for provenance persistence."
+              />
+              <SetupItem
                 label="Upload bucket"
                 ready={runtimeStatus.bucketReady}
                 detail="Checks whether the essay-uploads storage bucket exists for source files."
@@ -179,6 +184,8 @@ export default async function SetupPage() {
               <li>Add `OPENAI_API_KEY` only if you want AI-assisted analysis instead of fallback-only mode.</li>
               <li>Add `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, and `STRIPE_WEBHOOK_SECRET` for billing sandbox mode.</li>
               <li>Run the SQL in `supabase/migrations/20260331_init.sql` and `supabase/migrations/20260331_v15_billing.sql` against your Supabase project.</li>
+              <li>Run `supabase/migrations/20260523_trust_review_platform.sql` to enable jobs, chunks, claims, evidence, traces, evals, and pgvector retrieval.</li>
+              <li>Run `npm run supabase:verify` and confirm every table is reachable.</li>
               <li>Restart `npm run dev` and test sign-up, upload, and report generation end to end.</li>
             </ol>
           </div>

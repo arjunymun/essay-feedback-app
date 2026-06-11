@@ -1,0 +1,40 @@
+name: DraftLens CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npx playwright install chromium
+      - run: npm run test:e2e
+      - run: npm run build
+
+  review-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r services/review-api/requirements.txt
+      - run: python -m pytest services/review-api/tests
+        env:
+          PYTHONPATH: services/review-api
+      - run: python -m review_api.evals
+        env:
+          PYTHONPATH: services/review-api

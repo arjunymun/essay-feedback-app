@@ -1,0 +1,34 @@
+services:
+  review-api:
+    build:
+      context: .
+      dockerfile: services/review-api/Dockerfile
+    environment:
+      DRAFTLENS_REVIEW_SECRET: ${DRAFTLENS_REVIEW_SECRET:-local-review-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_FAST_MODEL: ${OPENAI_FAST_MODEL:-gpt-5.4-mini}
+      OPENAI_REASONING_MODEL: ${OPENAI_REASONING_MODEL:-gpt-5.5}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      DRAFTLENS_USE_AGENTIC_PIPELINE: ${DRAFTLENS_USE_AGENTIC_PIPELINE:-true}
+      DRAFTLENS_ENABLE_LIVE_LOOKUPS: ${DRAFTLENS_ENABLE_LIVE_LOOKUPS:-false}
+      CROSSREF_MAILTO: ${CROSSREF_MAILTO:-}
+      OPENALEX_MAILTO: ${OPENALEX_MAILTO:-}
+    ports:
+      - "8000:8000"
+
+  web:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev"
+    depends_on:
+      - review-api
+    environment:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_FORCE_DEMO_MODE: "true"
+      REVIEW_SERVICE_URL: http://review-api:8000
+      DRAFTLENS_REVIEW_SECRET: ${DRAFTLENS_REVIEW_SECRET:-local-review-secret}
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules

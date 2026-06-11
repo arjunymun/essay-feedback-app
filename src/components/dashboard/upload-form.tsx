@@ -18,14 +18,16 @@ export function UploadForm({
 }: UploadFormProps) {
   const progressLabels = [
     "Uploading your document",
-    "Extracting essay text and citations",
-    "Scoring the draft against the rubric",
-    "Preparing your report",
+    "Extracting sections, citations, and anchors",
+    "Planning trust-first review passes",
+    "Verifying claims, citations, and evidence",
+    "Critic-checking the final report",
   ];
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [progressIndex, setProgressIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
 
@@ -46,6 +48,7 @@ export function UploadForm({
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setErrorCode(null);
 
     if (!file) {
       setError("Choose a DOCX or text-based PDF file first.");
@@ -84,6 +87,7 @@ export function UploadForm({
 
           setProgressIndex(0);
           setError(payload?.error ?? fallbackError);
+          setErrorCode(payload?.code ?? null);
           return;
         }
 
@@ -108,10 +112,12 @@ export function UploadForm({
         <div>
           <p className="eyebrow">New analysis</p>
           <h2 className="font-display text-3xl text-[var(--foreground)]">
-            Upload an essay for scoring
+            Upload a draft for trust-first review
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--muted)]">
             v1 supports DOCX and text-based PDF files up to 10 MB and roughly 8,000 words.
+            DraftLens extracts claims, checks citation metadata, and labels uncertainty before
+            producing rewrite suggestions.
           </p>
         </div>
         <div className="rounded-full border border-[var(--border)] px-4 py-2 text-sm text-[var(--muted)]">
@@ -121,15 +127,16 @@ export function UploadForm({
 
       {demoMode ? (
         <div className="mt-6 rounded-[1.5rem] border border-sky-300/20 bg-sky-300/8 p-5 text-sm leading-7 text-sky-100">
-          <p className="font-medium">Demo mode is active</p>
+          <p className="font-medium">Sample workspace is active</p>
           <p className="mt-2 text-sky-100/80">
-            The full upload pipeline needs Supabase and OpenAI keys. You can still explore the product from the seeded sample report.
+            Live uploads are disabled in this preview workspace, but the sample
+            report shows the full trust-first review format.
           </p>
           <Link
             className="mt-4 inline-flex rounded-full border border-sky-200/30 px-4 py-2 text-sm"
             href="/dashboard/submissions/demo-report"
           >
-            Open demo report
+            Open sample report
           </Link>
         </div>
       ) : null}
@@ -201,12 +208,14 @@ export function UploadForm({
         <div className="mt-5 rounded-[1.6rem] border border-sky-300/20 bg-sky-300/8 p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="eyebrow">Analysis in progress</p>
+              <p className="eyebrow">Review pipeline running</p>
               <h3 className="mt-2 font-display text-2xl text-[var(--foreground)]">
-                Building your feedback report
+                Building an evidence-grounded report
               </h3>
             </div>
-            <p className="text-sm text-sky-100/80">This usually takes a few seconds.</p>
+            <p className="text-sm text-sky-100/80">
+              Longer documents may take a minute while evidence and citations are checked.
+            </p>
           </div>
 
           <div className="mt-5 upload-progress-bar">
@@ -237,7 +246,7 @@ export function UploadForm({
       ) : null}
 
       {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
-      {error?.includes("available credits") ? (
+      {errorCode === "NO_CREDITS" ? (
         <div className="mt-4 rounded-[1.4rem] border border-amber-300/20 bg-amber-300/8 p-4 text-sm leading-7 text-amber-100">
           <p className="font-medium">You are out of credits.</p>
           <p className="mt-2 text-amber-100/85">
